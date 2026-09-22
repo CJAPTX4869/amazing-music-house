@@ -29,3 +29,8 @@ Thumbs.db
 # 本地环境变量（密钥类文件绝不入库）
 .env.local
 .env.*.local
+
+# 手工备份文件与 pnpm 本地状态
+*.bak*
+.modules.yaml
+.pnpm-workspace-state*.json
