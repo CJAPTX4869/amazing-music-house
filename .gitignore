@@ -1,0 +1,31 @@
+# 依赖与构建产物
+node_modules/
+dist/
+target/
+release/
+win-unpacked/
+
+# 本地大文件与运行时数据（音乐文件不入库）
+storage/
+*.mp3
+*.flac
+
+# 日志与临时文件
+*.log
+*.fail
+scp.fail
+
+# 浏览器/系统杂项
+edge-profile/
+.DS_Store
+Thumbs.db
+*.lnk
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 本地环境变量（密钥类文件绝不入库）
+.env.local
+.env.*.local
