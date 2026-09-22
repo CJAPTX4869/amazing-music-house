@@ -1,0 +1,294 @@
+<script setup lang="ts">
+import { getSuggestSearchList } from '@/service';
+import { useMainStore } from '@/stores/main';
+import { Search, List } from '@vicons/ionicons5';
+import { Delete, Music } from '@vicons/carbon';
+import { ArrowBackIosSharp, ArrowForwardIosRound } from '@vicons/material';
+import { useAsyncState, useElementHover } from '@vueuse/core';
+import { throttle } from 'lodash';
+import { isEmptyObject } from '@/utils';
+import { useThemeVars } from 'naive-ui';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, type CSSProperties } from 'vue';
+import { useRouter } from 'vue-router';
+import { userHistory } from '../hook/useHistoryRoutePath';
+import { mapSongs } from '@/utils/arr-map';
+import { nanoid } from 'nanoid';
+import { markSearchKeyword } from '@/utils/markSearhKeyword';
+
+const backIconRef = ref();
+const forwardIconRef = ref();
+const target = ref();
+const showPopover = ref(false);
+const inputRef = ref();
+const searchWrapContainerRef = ref();
+const spread = ref(false);
+const defaultHeight = ref('100%');
+const historyListRef = ref<HTMLElement>();
+const themeVars = useThemeVars();
+const mainStore = useMainStore();
+const backHover = useElementHover(backIconRef);
+const forwardHover = useElementHover(forwardIconRef);
+const { backPath, forwardPath } = userHistory();
+const router = useRouter();
+const { state: defaultSearchKeyWord } = useAsyncState(Promise.resolve({ data: { showKeyword: '搜索音乐', realkeyword: '' } }).then(r => r.data), {});
+const { state: hotSearch, isLoading: hotSearchLoading } = useAsyncState(Promise.resolve({ data: { data: [] } }).then(r => r.data), {});
+const containerStyle = computed(() => {
+  let hasLen = mainStore.searchKeyword.length > 0;
+  let style: CSSProperties = {
+    background: themeVars.value.modalColor, zIndex: 1000, width: hasLen
+      ? '420px '
+      : '384px'
+  };
+  if (hasLen) {
+    style = {
+      ...style,
+      transition: 'width ease-in-out 0.3s'
+    };
+  }
+  return style;
+});
+const { state: suggestResult, isLoading: suggestLoading, execute } = useAsyncState(
+  (val) => getSuggestSearchList(val).then(async res => {
+    let result = res.data.result;
+    let primaryColor = themeVars.value.primaryColor;
+    res.data.result.songs = mapSongs(res.data.result.songs);
+    res.data.result.songs = markSearchKeyword(
+      result.songs, ['name', 'formatAuthor', 'alias'], mainStore.searchKeyword, primaryColor
+    );
+    res.data.result.playlists = markSearchKeyword(
+      result.playlists || [], ['name'], mainStore.searchKeyword, primaryColor
+    );
+    return res.data.result;
+  }), {}, { resetOnExecute: false, immediate: false }
+);
+
+const arrowIconClass = (value: string) => {
+  return value
+    ? 'opacity-100 cursor-pointer'
+    : 'opacity-50';
+};
+const historyListStyle = computed<CSSProperties>(() => {
+  if (spread.value) {
+    return { height: defaultHeight.value, overflow: 'visible' };
+  }
+  return {
+    height: defaultHeight.value
+      ? parseInt(defaultHeight.value) >= 62
+        ? '62px'
+        : '100%'
+      : '100%', overflow: 'hidden'
+  };
+});
+const handleArrowClick = (type: 'back' | 'forward') => {
+  if (type === 'back' && backPath.value) {
+    history.back();
+    mainStore.setShowMusicDetail(false);
+  }
+  if (type === 'forward' && forwardPath.value) {
+    history.forward();
+    mainStore.setShowMusicDetail(false);
+  }
+};
+const handleCheckAllClick = () => {
+  if (defaultHeight.value === '100%') return;
+  spread.value = !spread.value;
+};
+watch([backHover, forwardHover], (value: boolean[]) => {
+  let [backIsHover, forwardIsHover] = value;
+  let backIconEle = (backIconRef.value as HTMLSpanElement);
+  let forwardIconEle = (forwardIconRef.value as HTMLSpanElement);
+
+  if (backPath.value) {
+    backIsHover
+      ? backIconEle.style.color = themeVars.value.primaryColor
+      : backIconEle.style.color = '';
+  } else {
+    backIconEle.style.color = '';
+  }
+  if (forwardPath.value) {
+    forwardIsHover
+      ? forwardIconEle.style.color = themeVars.value.primaryColor
+      : forwardIconEle.style.color = '';
+  } else {
+    forwardIconEle.style.color = '';
+  }
+});
+const toSearchResult = (val?: string) => {
+  if (!mainStore.searchKeyword && defaultSearchKeyWord.value?.realkeyword && !val) {
+    mainStore.searchKeyword = defaultSearchKeyWord.value.realkeyword;
+  }
+  if (val) {
+    mainStore.searchKeyword = val;
+  }
+  mainStore.addSearchHistory(mainStore.searchKeyword);
+  showPopover.value = false;
+  mainStore.setShowMusicDetail(false);
+  router.push({
+    path: '/searchResult',
+    query: { keyword: mainStore.searchKeyword }
+  });
+
+};
+const getSearchSuggest = (val: string, oldVal: string) => {
+  if (val === oldVal) return;
+  suggestResult.value = {};
+  execute(0, val);
+};
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (showPopover.value && e.code === 'Enter') {
+    toSearchResult();
+  }
+};
+const handleBodyClick = (ev: MouseEvent) => {
+  if (!ev.composedPath().includes(inputRef.value) && !ev.composedPath().includes(searchWrapContainerRef.value)) {
+    showPopover.value = false;
+    spread.value = false;
+  }
+};
+const handleSearchSongClick = async (song: any) => {
+  song.like = mainStore.hasLikeSong(song.id);
+  if (mainStore.playList.length) {
+    mainStore.insertPlay(song);
+  } else {
+    mainStore.initPlayList(
+      [song], 0, nanoid()
+    );
+  }
+  showPopover.value = false;
+};
+const handleClearClick = (e: MouseEvent, index: number) => {
+  e.stopPropagation();
+  mainStore.removeSearchHistory(index);
+};
+const handleSearchPlayListClick = (id: string) => {
+  router.push(`/songList/${id}`);
+  showPopover.value = false;
+  mainStore.setShowMusicDetail(false);
+};
+watch(() => mainStore.searchKeyword, throttle(getSearchSuggest, 300));
+watch(showPopover, async (val) => {
+  if (val && defaultHeight.value === '100%') {
+    await nextTick();
+    if (!historyListRef.value?.children[0]) return;
+    defaultHeight.value = historyListRef!.value!.children[0]!.clientHeight + 'px';
+  }
+});
+watch(() => mainStore.searchHistory, async () => {
+  await nextTick();
+  defaultHeight.value = historyListRef!.value!.children[0]!.clientHeight + 'px';
+});
+onMounted(() => {
+  document.body.addEventListener('keydown', handleKeyDown);
+  document.body.addEventListener('click', handleBodyClick);
+});
+
+onUnmounted(() => {
+  document.body.removeEventListener('keydown', handleKeyDown);
+});
+</script>
+<template>
+  <div class="flex items-center ml-8">
+    <div ref="backIconRef" class="text-base" @click="handleArrowClick('back')">
+      <n-icon :class="[arrowIconClass(backPath)]" :component="ArrowBackIosSharp" />
+    </div>
+    <div ref="forwardIconRef" class="ml-2 text-base" @click="handleArrowClick('forward')">
+      <n-icon :class="[arrowIconClass(forwardPath)]" :component="ArrowForwardIosRound" />
+    </div>
+  </div>
+  <div class="relative w-50">
+    <div ref="inputRef" class="wrapInput">
+      <n-input ref="target" v-model:value="mainStore.searchKeyword" size="small" class="ml-5 headerSearchInput" round
+        :placeholder="defaultSearchKeyWord.showKeyword" clearable @focus="showPopover = true">
+        <template #prefix>
+          <n-icon class="cursor-pointer" :component="Search" @click="() => toSearchResult()" />
+        </template>
+      </n-input>
+    </div>
+    <transition name="fade-in-scale-up">
+      <div v-show="showPopover" ref="searchWrapContainerRef"
+        class="absolute top-10 rounded-sm shadow-lg dark:shadow-black/60 origin-top-left searchWrapContainer"
+        :style="containerStyle">
+        <n-scrollbar style="max-height:500px">
+          <!-- 搜索历史 -->
+          <div v-show="mainStore.searchHistory.length && !mainStore.searchKeyword.length" class="p-4 pb-0">
+            <div class="flex justify-between items-center opacity-70">
+              <div>
+                <span class="pr-2">搜索历史</span>
+                <n-popconfirm :on-positive-click="() => mainStore.clearSearchHistory()" positive-text="确定">
+                  <template #trigger>
+                    <n-icon class="cursor-pointer" :component="Delete" />
+                  </template>
+                  确定删除历史记录?
+                </n-popconfirm>
+              </div>
+              <n-button v-if="parseInt(defaultHeight) > 62" text @click="handleCheckAllClick">
+                {{ spread ? '收起' : '查看全部' }}
+              </n-button>
+            </div>
+            <div ref="historyListRef" class="mt-2 transition-height" :style="historyListStyle">
+              <n-space>
+                <n-tag v-for="(item, index) in mainStore.searchHistory" :key="item" closable size="small" round
+                  @click="toSearchResult(item)" @close="(e: MouseEvent) => handleClearClick(e, index)">
+                  {{ item }}
+                </n-tag>
+              </n-space>
+            </div>
+          </div>
+          <!-- 热搜榜 -->
+          <div v-show="!mainStore.searchKeyword.length">
+            <p class="pl-4 mt-4 opacity-70">
+              热搜榜
+            </p>
+            <n-spin :show="hotSearchLoading">
+              <div v-show="hotSearchLoading" class="h-60" />
+              <div v-for="(item, index) in hotSearch" :key="item.searchWord"
+                class="flex items-center p-5 hover:bg-gray-100 dark:hover:bg-gray-100/20 cursor-pointer"
+                @click="toSearchResult(item.searchWord)">
+                <span class="text-base"
+                  :style="{ color: index >= 0 && index <= 2 ? themeVars.primaryColor : themeVars.textColor1 }">
+                  {{ index + 1 }}
+                </span>
+                <div class="ml-4">
+                  <span :style="{ fontWeight: index >= 0 && index <= 2 ? 'bold' : 'initial' }"> {{ item.searchWord }}</span>
+                  <span class="pl-2 text-sm opacity-40">{{ item.score }}</span>
+                </div>
+              </div>
+            </n-spin>
+          </div>
+          <!-- 搜索建议 -->
+          <div v-show="mainStore.searchKeyword.length > 0" class="py-4">
+            <n-spin :show="suggestLoading" size="small" description="搜索中...">
+              <div v-show="suggestLoading" class="h-80" />
+              <div>
+                <p v-show="!suggestLoading && suggestResult.songs" class="flex items-center pl-4 text-base opacity-50">
+                  <n-icon :component="Music" />
+                  <span class="ml-2">单曲</span>
+                </p>
+                <div v-for="item in suggestResult.songs" :key="item.id" class="py-2 pl-10 cursor-pointer base-hover-bg"
+                  @click="handleSearchSongClick(item)">
+                  <span v-html="item.nameRichText" />
+                  <span v-if="item.alias?.[0]" class="opacity-50">
+                    （<span v-html="item.alias[0]" />）
+                  </span>
+                  <span> - </span>
+                  <span v-html="item.formatAuthorRichText" />
+                </div>
+                <p v-show="!suggestLoading && suggestResult.playlists?.length > 0"
+                  class="flex items-center pl-4 text-base opacity-50">
+                  <n-icon :component="List" />
+                  <span class="ml-2">歌单</span>
+                </p>
+                <div v-for="item in suggestResult.playlists" :key="item.id"
+                  class="py-2 pl-10 cursor-pointer base-hover-bg" @click="handleSearchPlayListClick(item.id)"
+                  v-html="item.nameRichText" />
+                <base-empty
+                  v-show="mainStore.searchKeyword.length > 0 && isEmptyObject(suggestResult) && !suggestLoading"
+                  description="没有搜索建议" />
+              </div>
+            </n-spin>
+          </div>
+        </n-scrollbar>
+      </div>
+    </transition>
+  </div>
+</template>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="google-site-verification" content="jO2s61DEajT0Y9jksEjQ1s4dr8ntAKYIJoMdUA20u7g" />
+  <link rel="icon" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" crossorigin="anonymous"
+    href="https://unpkg.byted-static.com/xgplayer/3.0.10/dist/index.min.css">
+  <title>奇妙音乐屋</title>
+  <style>
+    #loading {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 140px;
+      height: auto;
+      min-height: 140px;
+    }
+
+    /* 自定义加载图（图片缺失时由 onerror 回退到下方 SVG 转圈） */
+    .zgn-loading-img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      animation: zgn-breathe 1.8s ease-in-out infinite;
+      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, .22));
+    }
+
+    @keyframes zgn-breathe {
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.07);
+      }
+    }
+
+    .loading_container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .loading_container>#loading>svg {
+      stroke: #18a058;
+    }
+
+    .loadingMessage {
+      font-size: 16px;
+      color: #ccc;
+      margin-top: 20px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .animate-spin {
+      animation: spin 0.4s linear infinite;
+    }
+
+    .vue-recycle-scroller {
+      position: relative
+    }
+
+    .vue-recycle-scroller.direction-vertical:not(.page-mode) {
+      overflow-y: auto
+    }
+
+    .vue-recycle-scroller.direction-horizontal:not(.page-mode) {
+      overflow-x: auto
+    }
+
+    .vue-recycle-scroller.direction-horizontal {
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex
+    }
+
+    .vue-recycle-scroller__slot {
+      -webkit-box-flex: 1;
+      -ms-flex: auto 0 0px;
+      flex: auto 0 0
+    }
+
+    .vue-recycle-scroller__item-wrapper {
+      -webkit-box-flex: 1;
+      -ms-flex: 1;
+      flex: 1;
+      -webkit-box-sizing:
+        border-box;
+      box-sizing: border-box;
+      overflow: hidden;
+      position: relative
+    }
+
+    .vue-recycle-scroller.ready .vue-recycle-scroller__item-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      will-change: transform
+    }
+
+    .vue-recycle-scroller.direction-vertical .vue-recycle-scroller__item-wrapper {
+      width: 100%
+    }
+
+    .vue-recycle-scroller.direction-horizontal .vue-recycle-scroller__item-wrapper {
+      height: 100%
+    }
+
+    .vue-recycle-scroller.ready.direction-vertical .vue-recycle-scroller__item-view {
+      width: 100%
+    }
+
+    .vue-recycle-scroller.ready.direction-horizontal .vue-recycle-scroller__item-view {
+      height: 100%
+    }
+
+    .resize-observer[data-v-b329ee4c] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background-color: transparent;
+      pointer-events: none;
+      display: block;
+      overflow: hidden;
+      opacity: 0
+    }
+
+    .resize-observer[data-v-b329ee4c] object {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: -1
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 品牌开屏：纯内联样式，首屏 JS 加载前即可见；Vue 挂载后由 src/main.ts 淡出移除 -->
+  <div id="app-splash">
+    <div class="as-logo">奇妙音乐屋</div>
+    <div class="as-bar"><i></i></div>
+    <div class="as-tip">正在唤醒你的音乐…</div>
+  </div>
+  <style>
+    #app-splash { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px; color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(160deg, #0f1115 0%, #161a22 60%, #0d0f13 100%);
+      transition: opacity .45s ease, visibility .45s ease; }
+    #app-splash.is-hidden { opacity: 0; visibility: hidden; }
+    #app-splash .as-logo { font-size: 26px; font-weight: 600; letter-spacing: .28em;
+      background: linear-gradient(90deg, #7ee0a0, #3ecf8e, #a5e8c0);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: as-in .7s ease both; }
+    #app-splash .as-bar { width: 180px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
+    #app-splash .as-bar i { display: block; height: 100%; width: 40%; border-radius: 3px;
+      background: linear-gradient(90deg, #3ecf8e, #8ef0b8); animation: as-run 1.15s ease-in-out infinite; }
+    #app-splash .as-tip { font-size: 12px; letter-spacing: .1em; opacity: .55; }
+    @keyframes as-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+    @keyframes as-run { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
+    @media (prefers-color-scheme: light) {
+      #app-splash { background: linear-gradient(160deg, #f7f9fb, #eef2f6 60%, #f7f9fb); color: #1b1f24; }
+      #app-splash .as-bar { background: rgba(0,0,0,.08); }
+    }
+  </style>
+  <div id="app">
+    <div class="loading_container">
+      <div id="loading">
+        <img id="zgnLoadingImg" class="zgn-loading-img" src="/zgn.png" alt="loading"
+          onerror="this.style.display='none';document.getElementById('zgnLoadingSvg').style.display='block'" />
+        <svg id="zgnLoadingSvg" style="display:none" class="animate-spin" viewBox="0 0 200 200"
+          xmlns="http://www.w3.org/2000/svg">
+          <circle fill="none" stroke-width="16" stroke-linecap="round" cx="100" cy="100" r="92" stroke-dasharray="491"
+            stroke-dashoffset="246">
+          </circle>
+        </svg>
+        <span class="loadingMessage ">加载中...</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>

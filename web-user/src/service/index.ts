@@ -1,0 +1,12 @@
+import service from './request';
+// 获取轮播
+export function getBanner() {
+  return service.get('/banner');
+}
+export * from './playlist';
+export * from './songs';
+export * from './login';
+export * from './user';
+export * from './search';
+export * from './comment';
+export * from './follow';

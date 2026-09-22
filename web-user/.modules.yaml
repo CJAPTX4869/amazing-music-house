@@ -1,0 +1,1607 @@
+{
+  "hoistedDependencies": {
+    "@ffmpeg/types@0.12.4": {
+      "@ffmpeg/types": "private"
+    },
+    "@types/color-convert@2.0.4": {
+      "@types/color-convert": "private"
+    },
+    "@types/tough-cookie@4.0.5": {
+      "@types/tough-cookie": "private"
+    },
+    "parse5@7.2.1": {
+      "parse5": "private"
+    },
+    "undici-types@6.21.0": {
+      "undici-types": "private"
+    },
+    "@babel/core@7.26.10(supports-color@7.2.0)": {
+      "@babel/core": "private"
+    },
+    "@babel/plugin-transform-typescript@7.27.0(@babel/core@7.26.10(supports-color@7.2.0))(supports-color@7.2.0)": {
+      "@babel/plugin-transform-typescript": "private"
+    },
+    "@vue/babel-plugin-jsx@1.4.0(@babel/core@7.26.10(supports-color@7.2.0))(supports-color@7.2.0)": {
+      "@vue/babel-plugin-jsx": "private"
+    },
+    "eslint-config-prettier@10.1.2(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))": {
+      "eslint-config-prettier": "private"
+    },
+    "eslint-plugin-prettier@5.2.6(eslint-config-prettier@10.1.2(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0)))(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(prettier@3.5.3)": {
+      "eslint-plugin-prettier": "private"
+    },
+    "@typescript-eslint/utils@8.29.1(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3)": {
+      "@typescript-eslint/utils": "private"
+    },
+    "fast-glob@3.3.3": {
+      "fast-glob": "private"
+    },
+    "typescript-eslint@8.29.1(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3)": {
+      "typescript-eslint": "private"
+    },
+    "vue-eslint-parser@10.1.3(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(supports-color@7.2.0)": {
+      "vue-eslint-parser": "private"
+    },
+    "js-beautify@1.15.4": {
+      "js-beautify": "private"
+    },
+    "vue-component-type-helpers@2.2.8": {
+      "vue-component-type-helpers": "private"
+    },
+    "@types/web-bluetooth@0.0.20": {
+      "@types/web-bluetooth": "private"
+    },
+    "@vueuse/metadata@11.3.0": {
+      "@vueuse/metadata": "private"
+    },
+    "@vueuse/shared@11.3.0(vue@3.5.13(typescript@5.6.3))": {
+      "@vueuse/shared": "private"
+    },
+    "vue-demi@0.14.10(vue@3.5.13(typescript@5.6.3))": {
+      "vue-demi": "private"
+    },
+    "browserslist@4.24.4": {
+      "browserslist": "private"
+    },
+    "caniuse-lite@1.0.30001713": {
+      "caniuse-lite": "private"
+    },
+    "fraction.js@4.3.7": {
+      "fraction.js": "private"
+    },
+    "normalize-range@0.1.2": {
+      "normalize-range": "private"
+    },
+    "picocolors@1.1.1": {
+      "picocolors": "private"
+    },
+    "postcss-value-parser@4.2.0": {
+      "postcss-value-parser": "private"
+    },
+    "follow-redirects@1.15.9(debug@4.4.0(supports-color@7.2.0))": {
+      "follow-redirects": "private"
+    },
+    "form-data@4.0.2": {
+      "form-data": "private"
+    },
+    "proxy-from-env@1.1.0": {
+      "proxy-from-env": "private"
+    },
+    "color-convert@2.0.1": {
+      "color-convert": "private"
+    },
+    "color-string@1.9.1": {
+      "color-string": "private"
+    },
+    "@lokesh.dhakar/quantize@1.4.0": {
+      "@lokesh.dhakar/quantize": "private"
+    },
+    "file-type@16.5.4": {
+      "file-type": "private"
+    },
+    "ndarray-pixels@4.1.0": {
+      "ndarray-pixels": "private"
+    },
+    "sharp@0.33.5": {
+      "sharp": "private"
+    },
+    "@eslint-community/eslint-utils@4.5.1(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))": {
+      "@eslint-community/eslint-utils": "private"
+    },
+    "globals@13.24.0": {
+      "globals": "private"
+    },
+    "natural-compare@1.4.0": {
+      "natural-compare": "private"
+    },
+    "nth-check@2.1.1": {
+      "nth-check": "private"
+    },
+    "postcss-selector-parser@6.1.2": {
+      "postcss-selector-parser": "private"
+    },
+    "semver@7.7.1": {
+      "semver": "private"
+    },
+    "xml-name-validator@4.0.0": {
+      "xml-name-validator": "private"
+    },
+    "@eslint-community/regexpp@4.12.1": {
+      "@eslint-community/regexpp": "private"
+    },
+    "@eslint/config-array@0.20.0(supports-color@7.2.0)": {
+      "@eslint/config-array": "private"
+    },
+    "@eslint/config-helpers@0.2.1": {
+      "@eslint/config-helpers": "private"
+    },
+    "@eslint/core@0.12.0": {
+      "@eslint/core": "private"
+    },
+    "@eslint/eslintrc@3.3.1(supports-color@7.2.0)": {
+      "@eslint/eslintrc": "private"
+    },
+    "@eslint/js@9.24.0": {
+      "@eslint/js": "private"
+    },
+    "@eslint/plugin-kit@0.2.8": {
+      "@eslint/plugin-kit": "private"
+    },
+    "@humanfs/node@0.16.6": {
+      "@humanfs/node": "private"
+    },
+    "@humanwhocodes/module-importer@1.0.1": {
+      "@humanwhocodes/module-importer": "private"
+    },
+    "@humanwhocodes/retry@0.4.2": {
+      "@humanwhocodes/retry": "private"
+    },
+    "@types/estree@1.0.7": {
+      "@types/estree": "private"
+    },
+    "@types/json-schema@7.0.15": {
+      "@types/json-schema": "private"
+    },
+    "ajv@6.12.6": {
+      "ajv": "private"
+    },
+    "chalk@4.1.2": {
+      "chalk": "private"
+    },
+    "cross-spawn@7.0.6": {
+      "cross-spawn": "private"
+    },
+    "debug@4.4.0(supports-color@7.2.0)": {
+      "debug": "private"
+    },
+    "escape-string-regexp@4.0.0": {
+      "escape-string-regexp": "private"
+    },
+    "eslint-scope@8.3.0": {
+      "eslint-scope": "private"
+    },
+    "eslint-visitor-keys@4.2.0": {
+      "eslint-visitor-keys": "private"
+    },
+    "espree@10.3.0": {
+      "espree": "private"
+    },
+    "esquery@1.6.0": {
+      "esquery": "private"
+    },
+    "esutils@2.0.3": {
+      "esutils": "private"
+    },
+    "fast-deep-equal@3.1.3": {
+      "fast-deep-equal": "private"
+    },
+    "file-entry-cache@8.0.0": {
+      "file-entry-cache": "private"
+    },
+    "find-up@5.0.0": {
+      "find-up": "private"
+    },
+    "glob-parent@6.0.2": {
+      "glob-parent": "private"
+    },
+    "ignore@5.3.2": {
+      "ignore": "private"
+    },
+    "imurmurhash@0.1.4": {
+      "imurmurhash": "private"
+    },
+    "is-glob@4.0.3": {
+      "is-glob": "private"
+    },
+    "json-stable-stringify-without-jsonify@1.0.1": {
+      "json-stable-stringify-without-jsonify": "private"
+    },
+    "lodash.merge@4.6.2": {
+      "lodash.merge": "private"
+    },
+    "minimatch@3.1.2": {
+      "minimatch": "private"
+    },
+    "optionator@0.9.4": {
+      "optionator": "private"
+    },
+    "jiti@1.21.7": {
+      "jiti": "private"
+    },
+    "accepts@1.3.8": {
+      "accepts": "private"
+    },
+    "array-flatten@1.1.1": {
+      "array-flatten": "private"
+    },
+    "body-parser@1.20.3(supports-color@7.2.0)": {
+      "body-parser": "private"
+    },
+    "content-disposition@0.5.4": {
+      "content-disposition": "private"
+    },
+    "content-type@1.0.5": {
+      "content-type": "private"
+    },
+    "cookie@0.7.1": {
+      "cookie": "private"
+    },
+    "cookie-signature@1.0.6": {
+      "cookie-signature": "private"
+    },
+    "depd@2.0.0": {
+      "depd": "private"
+    },
+    "encodeurl@2.0.0": {
+      "encodeurl": "private"
+    },
+    "escape-html@1.0.3": {
+      "escape-html": "private"
+    },
+    "etag@1.8.1": {
+      "etag": "private"
+    },
+    "finalhandler@1.3.1(supports-color@7.2.0)": {
+      "finalhandler": "private"
+    },
+    "fresh@0.5.2": {
+      "fresh": "private"
+    },
+    "http-errors@2.0.0": {
+      "http-errors": "private"
+    },
+    "merge-descriptors@1.0.3": {
+      "merge-descriptors": "private"
+    },
+    "methods@1.1.2": {
+      "methods": "private"
+    },
+    "on-finished@2.4.1": {
+      "on-finished": "private"
+    },
+    "parseurl@1.3.3": {
+      "parseurl": "private"
+    },
+    "path-to-regexp@0.1.12": {
+      "path-to-regexp": "private"
+    },
+    "proxy-addr@2.0.7": {
+      "proxy-addr": "private"
+    },
+    "range-parser@1.2.1": {
+      "range-parser": "private"
+    },
+    "safe-buffer@5.2.1": {
+      "safe-buffer": "private"
+    },
+    "send@0.19.0(supports-color@7.2.0)": {
+      "send": "private"
+    },
+    "serve-static@1.16.2(supports-color@7.2.0)": {
+      "serve-static": "private"
+    },
+    "setprototypeof@1.2.0": {
+      "setprototypeof": "private"
+    },
+    "statuses@2.0.1": {
+      "statuses": "private"
+    },
+    "type-is@1.6.18": {
+      "type-is": "private"
+    },
+    "utils-merge@1.0.1": {
+      "utils-merge": "private"
+    },
+    "vary@1.1.2": {
+      "vary": "private"
+    },
+    "cssstyle@4.3.0": {
+      "cssstyle": "private"
+    },
+    "data-urls@5.0.0": {
+      "data-urls": "private"
+    },
+    "decimal.js@10.5.0": {
+      "decimal.js": "private"
+    },
+    "html-encoding-sniffer@4.0.0": {
+      "html-encoding-sniffer": "private"
+    },
+    "http-proxy-agent@7.0.2(supports-color@7.2.0)": {
+      "http-proxy-agent": "private"
+    },
+    "https-proxy-agent@7.0.6(supports-color@7.2.0)": {
+      "https-proxy-agent": "private"
+    },
+    "is-potential-custom-element-name@1.0.1": {
+      "is-potential-custom-element-name": "private"
+    },
+    "nwsapi@2.2.20": {
+      "nwsapi": "private"
+    },
+    "rrweb-cssom@0.7.1": {
+      "rrweb-cssom": "private"
+    },
+    "saxes@6.0.0": {
+      "saxes": "private"
+    },
+    "symbol-tree@3.2.4": {
+      "symbol-tree": "private"
+    },
+    "tough-cookie@5.1.2": {
+      "tough-cookie": "private"
+    },
+    "w3c-xmlserializer@5.0.0": {
+      "w3c-xmlserializer": "private"
+    },
+    "webidl-conversions@7.0.0": {
+      "webidl-conversions": "private"
+    },
+    "whatwg-encoding@3.1.1": {
+      "whatwg-encoding": "private"
+    },
+    "whatwg-mimetype@4.0.0": {
+      "whatwg-mimetype": "private"
+    },
+    "whatwg-url@14.2.0": {
+      "whatwg-url": "private"
+    },
+    "ws@8.18.1": {
+      "ws": "private"
+    },
+    "copy-anything@2.0.6": {
+      "copy-anything": "private"
+    },
+    "parse-node-version@1.0.1": {
+      "parse-node-version": "private"
+    },
+    "tslib@2.8.1": {
+      "tslib": "private"
+    },
+    "errno@0.1.8": {
+      "errno": "private"
+    },
+    "graceful-fs@4.2.11": {
+      "graceful-fs": "private"
+    },
+    "image-size@0.5.5": {
+      "image-size": "private"
+    },
+    "make-dir@2.1.0": {
+      "make-dir": "private"
+    },
+    "mime@1.6.0": {
+      "mime": "private"
+    },
+    "needle@3.3.1": {
+      "needle": "private"
+    },
+    "source-map@0.6.1": {
+      "source-map": "private"
+    },
+    "@css-render/plugin-bem@0.15.14(css-render@0.15.14)": {
+      "@css-render/plugin-bem": "private"
+    },
+    "@css-render/vue3-ssr@0.15.14(vue@3.5.13(typescript@5.6.3))": {
+      "@css-render/vue3-ssr": "private"
+    },
+    "@types/katex@0.16.7": {
+      "@types/katex": "private"
+    },
+    "@types/lodash@4.17.16": {
+      "@types/lodash": "private"
+    },
+    "@types/lodash-es@4.17.12": {
+      "@types/lodash-es": "private"
+    },
+    "async-validator@4.2.5": {
+      "async-validator": "private"
+    },
+    "css-render@0.15.14": {
+      "css-render": "private"
+    },
+    "csstype@3.1.3": {
+      "csstype": "private"
+    },
+    "date-fns@3.6.0": {
+      "date-fns": "private"
+    },
+    "date-fns-tz@3.2.0(date-fns@3.6.0)": {
+      "date-fns-tz": "private"
+    },
+    "evtd@0.2.4": {
+      "evtd": "private"
+    },
+    "highlight.js@11.11.1": {
+      "highlight.js": "private"
+    },
+    "lodash-es@4.17.21": {
+      "lodash-es": "private"
+    },
+    "seemly@0.3.10": {
+      "seemly": "private"
+    },
+    "treemate@0.3.11": {
+      "treemate": "private"
+    },
+    "vdirs@0.1.8(vue@3.5.13(typescript@5.6.3))": {
+      "vdirs": "private"
+    },
+    "vooks@0.2.12(vue@3.5.13(typescript@5.6.3))": {
+      "vooks": "private"
+    },
+    "vueuc@0.4.64(vue@3.5.13(typescript@5.6.3))": {
+      "vueuc": "private"
+    },
+    "@vue/devtools-api@6.6.4": {
+      "@vue/devtools-api": "private"
+    },
+    "source-map-js@1.2.1": {
+      "source-map-js": "private"
+    },
+    "side-channel@1.1.0": {
+      "side-channel": "private"
+    },
+    "chokidar@4.0.3": {
+      "chokidar": "private"
+    },
+    "immutable@5.1.1": {
+      "immutable": "private"
+    },
+    "@parcel/watcher@2.5.1": {
+      "@parcel/watcher": "private"
+    },
+    "@alloc/quick-lru@5.2.0": {
+      "@alloc/quick-lru": "private"
+    },
+    "arg@5.0.2": {
+      "arg": "private"
+    },
+    "didyoumean@1.2.2": {
+      "didyoumean": "private"
+    },
+    "dlv@1.1.3": {
+      "dlv": "private"
+    },
+    "lilconfig@3.1.3": {
+      "lilconfig": "private"
+    },
+    "micromatch@4.0.8": {
+      "micromatch": "private"
+    },
+    "normalize-path@3.0.0": {
+      "normalize-path": "private"
+    },
+    "object-hash@3.0.0": {
+      "object-hash": "private"
+    },
+    "postcss-import@15.1.0(postcss@8.5.3)": {
+      "postcss-import": "private"
+    },
+    "postcss-js@4.0.1(postcss@8.5.3)": {
+      "postcss-js": "private"
+    },
+    "postcss-load-config@4.0.2(postcss@8.5.3)": {
+      "postcss-load-config": "private"
+    },
+    "postcss-nested@6.2.0(postcss@8.5.3)": {
+      "postcss-nested": "private"
+    },
+    "resolve@1.22.10": {
+      "resolve": "private"
+    },
+    "sucrase@3.35.0": {
+      "sucrase": "private"
+    },
+    "@antfu/utils@0.7.10": {
+      "@antfu/utils": "private"
+    },
+    "@rollup/pluginutils@5.1.4(rollup@4.39.0)": {
+      "@rollup/pluginutils": "private"
+    },
+    "local-pkg@0.5.1": {
+      "local-pkg": "private"
+    },
+    "magic-string@0.30.17": {
+      "magic-string": "private"
+    },
+    "mlly@1.7.4": {
+      "mlly": "private"
+    },
+    "unplugin@1.16.1": {
+      "unplugin": "private"
+    },
+    "@babel/parser@7.27.0": {
+      "@babel/parser": "private"
+    },
+    "fs-extra@10.1.0": {
+      "fs-extra": "private"
+    },
+    "esbuild@0.21.5": {
+      "esbuild": "private"
+    },
+    "rollup@4.39.0": {
+      "rollup": "private"
+    },
+    "@vitest/expect@2.1.9": {
+      "@vitest/expect": "private"
+    },
+    "@vitest/mocker@2.1.9(vite@5.4.18(@types/node@22.14.1)(less@4.3.0)(sass@1.86.3))": {
+      "@vitest/mocker": "private"
+    },
+    "@vitest/pretty-format@2.1.9": {
+      "@vitest/pretty-format": "private"
+    },
+    "@vitest/runner@2.1.9": {
+      "@vitest/runner": "private"
+    },
+    "@vitest/snapshot@2.1.9": {
+      "@vitest/snapshot": "private"
+    },
+    "@vitest/spy@2.1.9": {
+      "@vitest/spy": "private"
+    },
+    "@vitest/utils@2.1.9": {
+      "@vitest/utils": "private"
+    },
+    "chai@5.2.0": {
+      "chai": "private"
+    },
+    "expect-type@1.2.1": {
+      "expect-type": "private"
+    },
+    "pathe@1.1.2": {
+      "pathe": "private"
+    },
+    "std-env@3.9.0": {
+      "std-env": "private"
+    },
+    "tinybench@2.9.0": {
+      "tinybench": "private"
+    },
+    "tinyexec@0.3.2": {
+      "tinyexec": "private"
+    },
+    "tinypool@1.0.2": {
+      "tinypool": "private"
+    },
+    "tinyrainbow@1.2.0": {
+      "tinyrainbow": "private"
+    },
+    "vite-node@2.1.9(@types/node@22.14.1)(less@4.3.0)(sass@1.86.3)(supports-color@7.2.0)": {
+      "vite-node": "private"
+    },
+    "why-is-node-running@2.3.0": {
+      "why-is-node-running": "private"
+    },
+    "@volar/typescript@2.4.12": {
+      "@volar/typescript": "private"
+    },
+    "@vue/language-core@2.2.8(typescript@5.6.3)": {
+      "@vue/language-core": "private"
+    },
+    "mitt@2.1.0": {
+      "mitt": "private"
+    },
+    "vue-observe-visibility@2.0.0-alpha.1(vue@3.5.13(typescript@5.6.3))": {
+      "vue-observe-visibility": "private"
+    },
+    "vue-resize@2.0.0-alpha.1(vue@3.5.13(typescript@5.6.3))": {
+      "vue-resize": "private"
+    },
+    "@vue/compiler-dom@3.5.13": {
+      "@vue/compiler-dom": "private"
+    },
+    "@vue/compiler-sfc@3.5.13": {
+      "@vue/compiler-sfc": "private"
+    },
+    "@vue/runtime-dom@3.5.13": {
+      "@vue/runtime-dom": "private"
+    },
+    "@vue/server-renderer@3.5.13(vue@3.5.13(typescript@5.6.3))": {
+      "@vue/server-renderer": "private"
+    },
+    "@vue/shared@3.5.13": {
+      "@vue/shared": "private"
+    },
+    "core-js@3.41.0": {
+      "core-js": "private"
+    },
+    "danmu.js@1.1.13": {
+      "danmu.js": "private"
+    },
+    "delegate@3.2.0": {
+      "delegate": "private"
+    },
+    "downloadjs@1.4.7": {
+      "downloadjs": "private"
+    },
+    "eventemitter3@4.0.7": {
+      "eventemitter3": "private"
+    },
+    "xgplayer-subtitles@3.0.21(core-js@3.41.0)": {
+      "xgplayer-subtitles": "private"
+    },
+    "@ampproject/remapping@2.3.0": {
+      "@ampproject/remapping": "private"
+    },
+    "@babel/code-frame@7.26.2": {
+      "@babel/code-frame": "private"
+    },
+    "@babel/generator@7.27.0": {
+      "@babel/generator": "private"
+    },
+    "@babel/helper-compilation-targets@7.27.0": {
+      "@babel/helper-compilation-targets": "private"
+    },
+    "@babel/helper-module-transforms@7.26.0(@babel/core@7.26.10(supports-color@7.2.0))(supports-color@7.2.0)": {
+      "@babel/helper-module-transforms": "private"
+    },
+    "@babel/helpers@7.27.0": {
+      "@babel/helpers": "private"
+    },
+    "@babel/template@7.27.0": {
+      "@babel/template": "private"
+    },
+    "@babel/traverse@7.27.0(supports-color@7.2.0)": {
+      "@babel/traverse": "private"
+    },
+    "@babel/types@7.27.0": {
+      "@babel/types": "private"
+    },
+    "convert-source-map@2.0.0": {
+      "convert-source-map": "private"
+    },
+    "gensync@1.0.0-beta.2": {
+      "gensync": "private"
+    },
+    "json5@2.2.3": {
+      "json5": "private"
+    },
+    "@babel/helper-annotate-as-pure@7.25.9": {
+      "@babel/helper-annotate-as-pure": "private"
+    },
+    "@babel/helper-create-class-features-plugin@7.27.0(@babel/core@7.26.10(supports-color@7.2.0))(supports-color@7.2.0)": {
+      "@babel/helper-create-class-features-plugin": "private"
+    },
+    "@babel/helper-plugin-utils@7.26.5": {
+      "@babel/helper-plugin-utils": "private"
+    },
+    "@babel/helper-skip-transparent-expression-wrappers@7.25.9(supports-color@7.2.0)": {
+      "@babel/helper-skip-transparent-expression-wrappers": "private"
+    },
+    "@babel/plugin-syntax-typescript@7.25.9(@babel/core@7.26.10(supports-color@7.2.0))": {
+      "@babel/plugin-syntax-typescript": "private"
+    },
+    "@eslint/object-schema@2.1.6": {
+      "@eslint/object-schema": "private"
+    },
+    "import-fresh@3.3.1": {
+      "import-fresh": "private"
+    },
+    "js-yaml@4.1.0": {
+      "js-yaml": "private"
+    },
+    "strip-json-comments@3.1.1": {
+      "strip-json-comments": "private"
+    },
+    "levn@0.4.1": {
+      "levn": "private"
+    },
+    "@humanfs/core@0.19.1": {
+      "@humanfs/core": "private"
+    },
+    "detect-libc@1.0.3": {
+      "detect-libc": "private"
+    },
+    "node-addon-api@7.1.1": {
+      "node-addon-api": "private"
+    },
+    "@parcel/watcher-win32-x64@2.5.1": {
+      "@parcel/watcher-win32-x64": "private"
+    },
+    "estree-walker@2.0.2": {
+      "estree-walker": "private"
+    },
+    "picomatch@4.0.2": {
+      "picomatch": "private"
+    },
+    "@types/color-name@1.1.5": {
+      "@types/color-name": "private"
+    },
+    "@typescript-eslint/scope-manager@8.29.1": {
+      "@typescript-eslint/scope-manager": "private"
+    },
+    "@typescript-eslint/types@8.29.1": {
+      "@typescript-eslint/types": "private"
+    },
+    "@typescript-eslint/typescript-estree@8.29.1(supports-color@7.2.0)(typescript@5.6.3)": {
+      "@typescript-eslint/typescript-estree": "private"
+    },
+    "tinyspy@3.0.2": {
+      "tinyspy": "private"
+    },
+    "loupe@3.1.3": {
+      "loupe": "private"
+    },
+    "@volar/language-core@2.4.12": {
+      "@volar/language-core": "private"
+    },
+    "path-browserify@1.0.1": {
+      "path-browserify": "private"
+    },
+    "vscode-uri@3.1.0": {
+      "vscode-uri": "private"
+    },
+    "@babel/helper-module-imports@7.25.9(supports-color@7.2.0)": {
+      "@babel/helper-module-imports": "private"
+    },
+    "@babel/plugin-syntax-jsx@7.25.9(@babel/core@7.26.10(supports-color@7.2.0))": {
+      "@babel/plugin-syntax-jsx": "private"
+    },
+    "@vue/babel-helper-vue-transform-on@1.4.0": {
+      "@vue/babel-helper-vue-transform-on": "private"
+    },
+    "@vue/babel-plugin-resolve-type@1.4.0(@babel/core@7.26.10(supports-color@7.2.0))(supports-color@7.2.0)": {
+      "@vue/babel-plugin-resolve-type": "private"
+    },
+    "@vue/compiler-core@3.5.13": {
+      "@vue/compiler-core": "private"
+    },
+    "@vue/compiler-ssr@3.5.13": {
+      "@vue/compiler-ssr": "private"
+    },
+    "@vue/compiler-vue2@2.7.16": {
+      "@vue/compiler-vue2": "private"
+    },
+    "alien-signals@1.0.13": {
+      "alien-signals": "private"
+    },
+    "muggle-string@0.4.1": {
+      "muggle-string": "private"
+    },
+    "@vue/reactivity@3.5.13": {
+      "@vue/reactivity": "private"
+    },
+    "@vue/runtime-core@3.5.13": {
+      "@vue/runtime-core": "private"
+    },
+    "mime-types@2.1.35": {
+      "mime-types": "private"
+    },
+    "negotiator@0.6.3": {
+      "negotiator": "private"
+    },
+    "fast-json-stable-stringify@2.1.0": {
+      "fast-json-stable-stringify": "private"
+    },
+    "json-schema-traverse@0.4.1": {
+      "json-schema-traverse": "private"
+    },
+    "uri-js@4.4.1": {
+      "uri-js": "private"
+    },
+    "bytes@3.1.2": {
+      "bytes": "private"
+    },
+    "destroy@1.2.0": {
+      "destroy": "private"
+    },
+    "iconv-lite@0.4.24": {
+      "iconv-lite": "private"
+    },
+    "raw-body@2.5.2": {
+      "raw-body": "private"
+    },
+    "unpipe@1.0.0": {
+      "unpipe": "private"
+    },
+    "electron-to-chromium@1.5.136": {
+      "electron-to-chromium": "private"
+    },
+    "node-releases@2.0.19": {
+      "node-releases": "private"
+    },
+    "update-browserslist-db@1.1.3(browserslist@4.24.4)": {
+      "update-browserslist-db": "private"
+    },
+    "assertion-error@2.0.1": {
+      "assertion-error": "private"
+    },
+    "check-error@2.1.1": {
+      "check-error": "private"
+    },
+    "deep-eql@5.0.2": {
+      "deep-eql": "private"
+    },
+    "pathval@2.0.0": {
+      "pathval": "private"
+    },
+    "ansi-styles@4.3.0": {
+      "ansi-styles": "private"
+    },
+    "supports-color@7.2.0": {
+      "supports-color": "private"
+    },
+    "anymatch@3.1.3": {
+      "anymatch": "private"
+    },
+    "braces@3.0.3": {
+      "braces": "private"
+    },
+    "is-binary-path@2.1.0": {
+      "is-binary-path": "private"
+    },
+    "readdirp@3.6.0": {
+      "readdirp": "private"
+    },
+    "color-name@1.1.4": {
+      "color-name": "private"
+    },
+    "simple-swizzle@0.2.2": {
+      "simple-swizzle": "private"
+    },
+    "is-what@3.14.1": {
+      "is-what": "private"
+    },
+    "path-key@3.1.1": {
+      "path-key": "private"
+    },
+    "shebang-command@2.0.0": {
+      "shebang-command": "private"
+    },
+    "which@2.0.2": {
+      "which": "private"
+    },
+    "@emotion/hash@0.8.0": {
+      "@emotion/hash": "private"
+    },
+    "@asamuzakjp/css-color@3.1.1": {
+      "@asamuzakjp/css-color": "private"
+    },
+    "event-emitter@0.3.5": {
+      "event-emitter": "private"
+    },
+    "ms@2.0.0": {
+      "ms": "private"
+    },
+    "prr@1.0.1": {
+      "prr": "private"
+    },
+    "@esbuild/win32-x64@0.21.5": {
+      "@esbuild/win32-x64": "private"
+    },
+    "prettier-linter-helpers@1.0.0": {
+      "prettier-linter-helpers": "private"
+    },
+    "synckit@0.11.3": {
+      "synckit": "private"
+    },
+    "esrecurse@4.3.0": {
+      "esrecurse": "private"
+    },
+    "estraverse@5.3.0": {
+      "estraverse": "private"
+    },
+    "acorn@8.14.1": {
+      "acorn": "private"
+    },
+    "acorn-jsx@5.3.2(acorn@8.14.1)": {
+      "acorn-jsx": "private"
+    },
+    "@nodelib/fs.stat@2.0.5": {
+      "@nodelib/fs.stat": "private"
+    },
+    "@nodelib/fs.walk@1.2.8": {
+      "@nodelib/fs.walk": "private"
+    },
+    "merge2@1.4.1": {
+      "merge2": "private"
+    },
+    "flat-cache@4.0.1": {
+      "flat-cache": "private"
+    },
+    "readable-web-to-node-stream@3.0.4": {
+      "readable-web-to-node-stream": "private"
+    },
+    "strtok3@6.3.0": {
+      "strtok3": "private"
+    },
+    "token-types@4.2.1": {
+      "token-types": "private"
+    },
+    "locate-path@6.0.0": {
+      "locate-path": "private"
+    },
+    "path-exists@4.0.0": {
+      "path-exists": "private"
+    },
+    "asynckit@0.4.0": {
+      "asynckit": "private"
+    },
+    "combined-stream@1.0.8": {
+      "combined-stream": "private"
+    },
+    "es-set-tostringtag@2.1.0": {
+      "es-set-tostringtag": "private"
+    },
+    "jsonfile@6.1.0": {
+      "jsonfile": "private"
+    },
+    "universalify@2.0.1": {
+      "universalify": "private"
+    },
+    "type-fest@0.20.2": {
+      "type-fest": "private"
+    },
+    "inherits@2.0.4": {
+      "inherits": "private"
+    },
+    "toidentifier@1.0.1": {
+      "toidentifier": "private"
+    },
+    "agent-base@7.1.3": {
+      "agent-base": "private"
+    },
+    "is-extglob@2.1.1": {
+      "is-extglob": "private"
+    },
+    "config-chain@1.1.13": {
+      "config-chain": "private"
+    },
+    "editorconfig@1.0.4": {
+      "editorconfig": "private"
+    },
+    "glob@10.4.5": {
+      "glob": "private"
+    },
+    "js-cookie@3.0.5": {
+      "js-cookie": "private"
+    },
+    "nopt@7.2.1": {
+      "nopt": "private"
+    },
+    "pkg-types@1.3.1": {
+      "pkg-types": "private"
+    },
+    "@jridgewell/sourcemap-codec@1.5.0": {
+      "@jridgewell/sourcemap-codec": "private"
+    },
+    "pify@4.0.1": {
+      "pify": "private"
+    },
+    "brace-expansion@1.1.11": {
+      "brace-expansion": "private"
+    },
+    "ufo@1.6.1": {
+      "ufo": "private"
+    },
+    "@types/ndarray@1.0.14": {
+      "@types/ndarray": "private"
+    },
+    "ndarray@1.0.19": {
+      "ndarray": "private"
+    },
+    "ndarray-ops@1.2.2": {
+      "ndarray-ops": "private"
+    },
+    "sax@1.4.1": {
+      "sax": "private"
+    },
+    "boolbase@1.0.0": {
+      "boolbase": "private"
+    },
+    "ee-first@1.1.1": {
+      "ee-first": "private"
+    },
+    "deep-is@0.1.4": {
+      "deep-is": "private"
+    },
+    "fast-levenshtein@2.0.6": {
+      "fast-levenshtein": "private"
+    },
+    "prelude-ls@1.2.1": {
+      "prelude-ls": "private"
+    },
+    "type-check@0.4.0": {
+      "type-check": "private"
+    },
+    "word-wrap@1.2.5": {
+      "word-wrap": "private"
+    },
+    "entities@4.5.0": {
+      "entities": "private"
+    },
+    "read-cache@1.0.0": {
+      "read-cache": "private"
+    },
+    "camelcase-css@2.0.1": {
+      "camelcase-css": "private"
+    },
+    "yaml@2.7.1": {
+      "yaml": "private"
+    },
+    "cssesc@3.0.0": {
+      "cssesc": "private"
+    },
+    "util-deprecate@1.0.2": {
+      "util-deprecate": "private"
+    },
+    "forwarded@0.2.0": {
+      "forwarded": "private"
+    },
+    "ipaddr.js@1.9.1": {
+      "ipaddr.js": "private"
+    },
+    "is-core-module@2.16.1": {
+      "is-core-module": "private"
+    },
+    "path-parse@1.0.7": {
+      "path-parse": "private"
+    },
+    "supports-preserve-symlinks-flag@1.0.0": {
+      "supports-preserve-symlinks-flag": "private"
+    },
+    "@rollup/rollup-win32-x64-msvc@4.39.0": {
+      "@rollup/rollup-win32-x64-msvc": "private"
+    },
+    "xmlchars@2.2.0": {
+      "xmlchars": "private"
+    },
+    "@img/sharp-win32-x64@0.33.5": {
+      "@img/sharp-win32-x64": "private"
+    },
+    "es-errors@1.3.0": {
+      "es-errors": "private"
+    },
+    "object-inspect@1.13.4": {
+      "object-inspect": "private"
+    },
+    "side-channel-list@1.0.0": {
+      "side-channel-list": "private"
+    },
+    "side-channel-map@1.0.1": {
+      "side-channel-map": "private"
+    },
+    "side-channel-weakmap@1.0.2": {
+      "side-channel-weakmap": "private"
+    },
+    "@jridgewell/gen-mapping@0.3.8": {
+      "@jridgewell/gen-mapping": "private"
+    },
+    "commander@4.1.1": {
+      "commander": "private"
+    },
+    "lines-and-columns@1.2.4": {
+      "lines-and-columns": "private"
+    },
+    "mz@2.7.0": {
+      "mz": "private"
+    },
+    "pirates@4.0.7": {
+      "pirates": "private"
+    },
+    "ts-interface-checker@0.1.13": {
+      "ts-interface-checker": "private"
+    },
+    "tldts@6.1.85": {
+      "tldts": "private"
+    },
+    "media-typer@0.3.0": {
+      "media-typer": "private"
+    },
+    "@typescript-eslint/eslint-plugin@8.29.1(@typescript-eslint/parser@8.29.1(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3))(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3)": {
+      "@typescript-eslint/eslint-plugin": "private"
+    },
+    "@typescript-eslint/parser@8.29.1(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3)": {
+      "@typescript-eslint/parser": "private"
+    },
+    "webpack-virtual-modules@0.6.2": {
+      "webpack-virtual-modules": "private"
+    },
+    "cac@6.7.14": {
+      "cac": "private"
+    },
+    "es-module-lexer@1.6.0": {
+      "es-module-lexer": "private"
+    },
+    "@juggle/resize-observer@3.4.0": {
+      "@juggle/resize-observer": "private"
+    },
+    "tr46@5.1.0": {
+      "tr46": "private"
+    },
+    "siginfo@2.0.0": {
+      "siginfo": "private"
+    },
+    "stackback@0.0.2": {
+      "stackback": "private"
+    },
+    "@jridgewell/trace-mapping@0.3.25": {
+      "@jridgewell/trace-mapping": "private"
+    },
+    "@csstools/css-calc@2.1.2(@csstools/css-parser-algorithms@3.0.4(@csstools/css-tokenizer@3.0.3))(@csstools/css-tokenizer@3.0.3)": {
+      "@csstools/css-calc": "private"
+    },
+    "@csstools/css-color-parser@3.0.8(@csstools/css-parser-algorithms@3.0.4(@csstools/css-tokenizer@3.0.3))(@csstools/css-tokenizer@3.0.3)": {
+      "@csstools/css-color-parser": "private"
+    },
+    "@csstools/css-parser-algorithms@3.0.4(@csstools/css-tokenizer@3.0.3)": {
+      "@csstools/css-parser-algorithms": "private"
+    },
+    "@csstools/css-tokenizer@3.0.3": {
+      "@csstools/css-tokenizer": "private"
+    },
+    "lru-cache@10.4.3": {
+      "lru-cache": "private"
+    },
+    "@babel/helper-validator-identifier@7.25.9": {
+      "@babel/helper-validator-identifier": "private"
+    },
+    "js-tokens@4.0.0": {
+      "js-tokens": "private"
+    },
+    "jsesc@3.1.0": {
+      "jsesc": "private"
+    },
+    "@babel/compat-data@7.26.8": {
+      "@babel/compat-data": "private"
+    },
+    "@babel/helper-validator-option@7.25.9": {
+      "@babel/helper-validator-option": "private"
+    },
+    "@babel/helper-member-expression-to-functions@7.25.9(supports-color@7.2.0)": {
+      "@babel/helper-member-expression-to-functions": "private"
+    },
+    "@babel/helper-optimise-call-expression@7.25.9": {
+      "@babel/helper-optimise-call-expression": "private"
+    },
+    "@babel/helper-replace-supers@7.26.5(@babel/core@7.26.10(supports-color@7.2.0))(supports-color@7.2.0)": {
+      "@babel/helper-replace-supers": "private"
+    },
+    "@babel/helper-string-parser@7.25.9": {
+      "@babel/helper-string-parser": "private"
+    },
+    "@nodelib/fs.scandir@2.1.5": {
+      "@nodelib/fs.scandir": "private"
+    },
+    "fastq@1.19.1": {
+      "fastq": "private"
+    },
+    "@typescript-eslint/type-utils@8.29.1(eslint@9.24.0(jiti@1.21.7)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.6.3)": {
+      "@typescript-eslint/type-utils": "private"
+    },
+    "@typescript-eslint/visitor-keys@8.29.1": {
+      "@typescript-eslint/visitor-keys": "private"
+    },
+    "graphemer@1.4.0": {
+      "graphemer": "private"
+    },
+    "ts-api-utils@2.1.0(typescript@5.6.3)": {
+      "ts-api-utils": "private"
+    },
+    "@volar/source-map@2.4.12": {
+      "@volar/source-map": "private"
+    },
+    "de-indent@1.0.2": {
+      "de-indent": "private"
+    },
+    "he@1.2.0": {
+      "he": "private"
+    },
+    "balanced-match@1.0.2": {
+      "balanced-match": "private"
+    },
+    "concat-map@0.0.1": {
+      "concat-map": "private"
+    },
+    "fill-range@7.1.1": {
+      "fill-range": "private"
+    },
+    "delayed-stream@1.0.0": {
+      "delayed-stream": "private"
+    },
+    "ini@1.3.8": {
+      "ini": "private"
+    },
+    "proto-list@1.2.4": {
+      "proto-list": "private"
+    },
+    "@one-ini/wasm@0.1.1": {
+      "@one-ini/wasm": "private"
+    },
+    "get-intrinsic@1.3.0": {
+      "get-intrinsic": "private"
+    },
+    "has-tostringtag@1.0.2": {
+      "has-tostringtag": "private"
+    },
+    "hasown@2.0.2": {
+      "hasown": "private"
+    },
+    "d@1.0.2": {
+      "d": "private"
+    },
+    "es5-ext@0.10.64": {
+      "es5-ext": "private"
+    },
+    "flatted@3.3.3": {
+      "flatted": "private"
+    },
+    "keyv@4.5.4": {
+      "keyv": "private"
+    },
+    "foreground-child@3.3.1": {
+      "foreground-child": "private"
+    },
+    "jackspeak@3.4.3": {
+      "jackspeak": "private"
+    },
+    "minipass@7.1.2": {
+      "minipass": "private"
+    },
+    "package-json-from-dist@1.0.1": {
+      "package-json-from-dist": "private"
+    },
+    "path-scurry@1.11.1": {
+      "path-scurry": "private"
+    },
+    "safer-buffer@2.1.2": {
+      "safer-buffer": "private"
+    },
+    "parent-module@1.0.1": {
+      "parent-module": "private"
+    },
+    "resolve-from@4.0.0": {
+      "resolve-from": "private"
+    },
+    "binary-extensions@2.3.0": {
+      "binary-extensions": "private"
+    },
+    "argparse@2.0.1": {
+      "argparse": "private"
+    },
+    "p-locate@5.0.0": {
+      "p-locate": "private"
+    },
+    "mime-db@1.52.0": {
+      "mime-db": "private"
+    },
+    "any-promise@1.3.0": {
+      "any-promise": "private"
+    },
+    "object-assign@4.1.1": {
+      "object-assign": "private"
+    },
+    "thenify-all@1.6.0": {
+      "thenify-all": "private"
+    },
+    "cwise-compiler@1.1.3": {
+      "cwise-compiler": "private"
+    },
+    "iota-array@1.0.0": {
+      "iota-array": "private"
+    },
+    "is-buffer@1.1.6": {
+      "is-buffer": "private"
+    },
+    "abbrev@2.0.0": {
+      "abbrev": "private"
+    },
+    "confbox@0.1.8": {
+      "confbox": "private"
+    },
+    "fast-diff@1.3.0": {
+      "fast-diff": "private"
+    },
+    "readable-stream@4.7.0": {
+      "readable-stream": "private"
+    },
+    "shebang-regex@3.0.0": {
+      "shebang-regex": "private"
+    },
+    "call-bound@1.0.4": {
+      "call-bound": "private"
+    },
+    "is-arrayish@0.3.2": {
+      "is-arrayish": "private"
+    },
+    "@tokenizer/token@0.3.0": {
+      "@tokenizer/token": "private"
+    },
+    "peek-readable@4.1.0": {
+      "peek-readable": "private"
+    },
+    "has-flag@4.0.0": {
+      "has-flag": "private"
+    },
+    "@pkgr/core@0.2.2": {
+      "@pkgr/core": "private"
+    },
+    "tldts-core@6.1.85": {
+      "tldts-core": "private"
+    },
+    "ieee754@1.2.1": {
+      "ieee754": "private"
+    },
+    "punycode@2.3.1": {
+      "punycode": "private"
+    },
+    "escalade@3.2.0": {
+      "escalade": "private"
+    },
+    "isexe@2.0.0": {
+      "isexe": "private"
+    },
+    "@csstools/color-helpers@5.0.2": {
+      "@csstools/color-helpers": "private"
+    },
+    "@jridgewell/set-array@1.2.1": {
+      "@jridgewell/set-array": "private"
+    },
+    "@jridgewell/resolve-uri@3.1.2": {
+      "@jridgewell/resolve-uri": "private"
+    },
+    "run-parallel@1.2.0": {
+      "run-parallel": "private"
+    },
+    "call-bind-apply-helpers@1.0.2": {
+      "call-bind-apply-helpers": "private"
+    },
+    "uniq@1.0.1": {
+      "uniq": "private"
+    },
+    "type@2.7.3": {
+      "type": "private"
+    },
+    "es6-iterator@2.0.3": {
+      "es6-iterator": "private"
+    },
+    "es6-symbol@3.1.4": {
+      "es6-symbol": "private"
+    },
+    "esniff@2.0.1": {
+      "esniff": "private"
+    },
+    "next-tick@1.1.0": {
+      "next-tick": "private"
+    },
+    "reusify@1.1.0": {
+      "reusify": "private"
+    },
+    "to-regex-range@5.0.1": {
+      "to-regex-range": "private"
+    },
+    "signal-exit@4.1.0": {
+      "signal-exit": "private"
+    },
+    "es-define-property@1.0.1": {
+      "es-define-property": "private"
+    },
+    "es-object-atoms@1.1.1": {
+      "es-object-atoms": "private"
+    },
+    "function-bind@1.1.2": {
+      "function-bind": "private"
+    },
+    "get-proto@1.0.1": {
+      "get-proto": "private"
+    },
+    "gopd@1.2.0": {
+      "gopd": "private"
+    },
+    "has-symbols@1.1.0": {
+      "has-symbols": "private"
+    },
+    "math-intrinsics@1.1.0": {
+      "math-intrinsics": "private"
+    },
+    "@isaacs/cliui@8.0.2": {
+      "@isaacs/cliui": "private"
+    },
+    "@pkgjs/parseargs@0.11.0": {
+      "@pkgjs/parseargs": "private"
+    },
+    "json-buffer@3.0.1": {
+      "json-buffer": "private"
+    },
+    "yallist@3.1.1": {
+      "yallist": "private"
+    },
+    "p-limit@3.1.0": {
+      "p-limit": "private"
+    },
+    "callsites@3.1.0": {
+      "callsites": "private"
+    },
+    "abort-controller@3.0.0": {
+      "abort-controller": "private"
+    },
+    "buffer@6.0.3": {
+      "buffer": "private"
+    },
+    "events@3.3.0": {
+      "events": "private"
+    },
+    "process@0.11.10": {
+      "process": "private"
+    },
+    "string_decoder@1.3.0": {
+      "string_decoder": "private"
+    },
+    "thenify@3.3.1": {
+      "thenify": "private"
+    },
+    "string-width@5.1.2": {
+      "string-width": "private"
+    },
+    "string-width@4.2.3": {
+      "string-width-cjs": "private"
+    },
+    "strip-ansi@7.1.0": {
+      "strip-ansi": "private"
+    },
+    "strip-ansi@6.0.1": {
+      "strip-ansi-cjs": "private"
+    },
+    "wrap-ansi@8.1.0": {
+      "wrap-ansi": "private"
+    },
+    "wrap-ansi@7.0.0": {
+      "wrap-ansi-cjs": "private"
+    },
+    "event-target-shim@5.0.1": {
+      "event-target-shim": "private"
+    },
+    "base64-js@1.5.1": {
+      "base64-js": "private"
+    },
+    "ext@1.7.0": {
+      "ext": "private"
+    },
+    "dunder-proto@1.0.1": {
+      "dunder-proto": "private"
+    },
+    "yocto-queue@0.1.0": {
+      "yocto-queue": "private"
+    },
+    "queue-microtask@1.2.3": {
+      "queue-microtask": "private"
+    },
+    "is-number@7.0.0": {
+      "is-number": "private"
+    },
+    "emoji-regex@8.0.0": {
+      "emoji-regex": "private"
+    },
+    "is-fullwidth-code-point@3.0.0": {
+      "is-fullwidth-code-point": "private"
+    },
+    "eastasianwidth@0.2.0": {
+      "eastasianwidth": "private"
+    },
+    "ansi-regex@5.0.1": {
+      "ansi-regex": "private"
+    }
+  },
+  "hoistPattern": [
+    "*"
+  ],
+  "included": {
+    "dependencies": true,
+    "devDependencies": true,
+    "optionalDependencies": true
+  },
+  "layoutVersion": 5,
+  "nodeLinker": "isolated",
+  "packageManager": "pnpm@12.4.1",
+  "pendingBuilds": [],
+  "prunedAt": "Tue, 15 Sep 2026 10:57:52 GMT",
+  "publicHoistPattern": [],
+  "skipped": [
+    "@emnapi/runtime@1.4.0",
+    "@esbuild/aix-ppc64@0.21.5",
+    "@esbuild/android-arm64@0.21.5",
+    "@esbuild/android-arm@0.21.5",
+    "@esbuild/android-x64@0.21.5",
+    "@esbuild/darwin-arm64@0.21.5",
+    "@esbuild/darwin-x64@0.21.5",
+    "@esbuild/freebsd-arm64@0.21.5",
+    "@esbuild/freebsd-x64@0.21.5",
+    "@esbuild/linux-arm64@0.21.5",
+    "@esbuild/linux-arm@0.21.5",
+    "@esbuild/linux-ia32@0.21.5",
+    "@esbuild/linux-loong64@0.21.5",
+    "@esbuild/linux-mips64el@0.21.5",
+    "@esbuild/linux-ppc64@0.21.5",
+    "@esbuild/linux-riscv64@0.21.5",
+    "@esbuild/linux-s390x@0.21.5",
+    "@esbuild/linux-x64@0.21.5",
+    "@esbuild/netbsd-x64@0.21.5",
+    "@esbuild/openbsd-x64@0.21.5",
+    "@esbuild/sunos-x64@0.21.5",
+    "@esbuild/win32-arm64@0.21.5",
+    "@esbuild/win32-ia32@0.21.5",
+    "@img/sharp-darwin-arm64@0.33.5",
+    "@img/sharp-darwin-x64@0.33.5",
+    "@img/sharp-libvips-darwin-arm64@1.0.4",
+    "@img/sharp-libvips-darwin-x64@1.0.4",
+    "@img/sharp-libvips-linux-arm64@1.0.4",
+    "@img/sharp-libvips-linux-arm@1.0.5",
+    "@img/sharp-libvips-linux-s390x@1.0.4",
+    "@img/sharp-libvips-linux-x64@1.0.4",
+    "@img/sharp-libvips-linuxmusl-arm64@1.0.4",
+    "@img/sharp-libvips-linuxmusl-x64@1.0.4",
+    "@img/sharp-linux-arm64@0.33.5",
+    "@img/sharp-linux-arm@0.33.5",
+    "@img/sharp-linux-s390x@0.33.5",
+    "@img/sharp-linux-x64@0.33.5",
+    "@img/sharp-linuxmusl-arm64@0.33.5",
+    "@img/sharp-linuxmusl-x64@0.33.5",
+    "@img/sharp-wasm32@0.33.5",
+    "@img/sharp-win32-ia32@0.33.5",
+    "@parcel/watcher-android-arm64@2.5.1",
+    "@parcel/watcher-darwin-arm64@2.5.1",
+    "@parcel/watcher-darwin-x64@2.5.1",
+    "@parcel/watcher-freebsd-x64@2.5.1",
+    "@parcel/watcher-linux-arm-glibc@2.5.1",
+    "@parcel/watcher-linux-arm-musl@2.5.1",
+    "@parcel/watcher-linux-arm64-glibc@2.5.1",
+    "@parcel/watcher-linux-arm64-musl@2.5.1",
+    "@parcel/watcher-linux-x64-glibc@2.5.1",
+    "@parcel/watcher-linux-x64-musl@2.5.1",
+    "@parcel/watcher-win32-arm64@2.5.1",
+    "@parcel/watcher-win32-ia32@2.5.1",
+    "@rollup/rollup-android-arm-eabi@4.39.0",
+    "@rollup/rollup-android-arm64@4.39.0",
+    "@rollup/rollup-darwin-arm64@4.39.0",
+    "@rollup/rollup-darwin-x64@4.39.0",
+    "@rollup/rollup-freebsd-arm64@4.39.0",
+    "@rollup/rollup-freebsd-x64@4.39.0",
+    "@rollup/rollup-linux-arm-gnueabihf@4.39.0",
+    "@rollup/rollup-linux-arm-musleabihf@4.39.0",
+    "@rollup/rollup-linux-arm64-gnu@4.39.0",
+    "@rollup/rollup-linux-arm64-musl@4.39.0",
+    "@rollup/rollup-linux-loongarch64-gnu@4.39.0",
+    "@rollup/rollup-linux-powerpc64le-gnu@4.39.0",
+    "@rollup/rollup-linux-riscv64-gnu@4.39.0",
+    "@rollup/rollup-linux-riscv64-musl@4.39.0",
+    "@rollup/rollup-linux-s390x-gnu@4.39.0",
+    "@rollup/rollup-linux-x64-gnu@4.39.0",
+    "@rollup/rollup-linux-x64-musl@4.39.0",
+    "@rollup/rollup-win32-arm64-msvc@4.39.0",
+    "@rollup/rollup-win32-ia32-msvc@4.39.0",
+    "fsevents@2.3.3"
+  ],
+  "storeDir": "D:\\.pnpm-store\\v11",
+  "virtualStoreDir": "D:\\Desktop\\生产实现\\vue3-cloud-music-master\\vue3-cloud-music-master\\vue3-cloud-music-master\\vue3-cloud-music-master\\node_modules\\.pnpm",
+  "virtualStoreDirMaxLength": 60,
+  "allowBuilds": {
+    "@parcel/watcher": true,
+    "core-js": true,
+    "es5-ext": true,
+    "esbuild": true,
+    "sharp": true,
+    "vue-demi": true
+  }
+}

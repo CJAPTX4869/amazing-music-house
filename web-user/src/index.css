@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.dark-text-color {
+  @apply text-white dark:text-black;
+}
+
+.bg-reverse-second-main{
+   @apply bg-secondBack dark:bg-zinc-100;
+}
+
+@layer base {
+  .flex-items-justify-center {
+    @apply flex items-center justify-center;
+  }
+  .group-hover-opacity{
+   @apply group-hover:opacity-1 opacity-0 transition-opacity duration-300;
+  }
+  .group-hover-scale{
+   @apply group-hover:scale-110 scale-100 transition-transform duration-300;
+  }
+  .border-left{
+    @apply border-0 border-l border-solid;
+  }
+  .flex-items-center{
+    @apply flex items-center;
+  }
+  .text-primary{
+    @apply text-sky-500;
+  }
+  .base-hover-bg{
+    @apply hover:bg-gray-100 dark:hover:bg-gray-100/20;
+  }
+}
+
+p{
+  margin: 0;
+}
+.v-binder-follower-content{
+  max-width: 50vw;
+}
