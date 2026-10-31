@@ -145,7 +145,7 @@ const fetchSongListDetail = (id: string = route.params.id as string) => {
     fetchMusicList();
   }).finally(() => loadPlayListSuccess())
 };
-const { wrapRequest, requestLoading, loadSuccess } = useMemorizeRequest(getPlaylistAllDetail, 'getPlaylistAllDetail');
+const { wrapRequest, requestLoading, loadSuccess, removeCache: removeListCache } = useMemorizeRequest(getPlaylistAllDetail, 'getPlaylistAllDetail');
 
 const getMoreMusicList = async () => {
   let trackCount = songListDetail.value!.trackCount;
@@ -214,10 +214,18 @@ watch(() => route.params, (val) => {
     fetchSongListDetail(id);
   }
 });
-watch(() => mainStore.likeSongs, (val, oldVal) => {
-  if (val.length !== oldVal.length) {
-    removeCache();
-  }
+// 收藏数一变，说明「我喜欢的音乐」的曲目集合变了。
+// 列表数据来自 useMemorizeRequest(getPlaylistAllDetail) 这个**独立实例**的缓存，
+// 原来只清了「详情」那份，所以行永远留在界面上（要 F5 才消失）；
+// 而且光清缓存也没人去重新发请求 —— 缓存只在挂载或 route.params 变化时被读，所以还要显式重拉。
+watch(() => mainStore.likeSongs.length, (val, oldVal) => {
+  if (val === oldVal) return;
+  removeCache(songListId.value);
+  removeListCache({ id: songListId.value });
+  // 无条件重拉：收藏集合一变，界面上的行就可能要增减。
+  // 原先想用 isMyLike 当守卫，但该标记依赖"歌单名 == 昵称+喜欢的音乐"这种字符串比对，
+  // 昵称为空或对不上时就是假值，结果守卫把重拉整件事挡掉了（实测取消收藏后 4 秒内零请求）。
+  fetchSongListDetail(songListId.value);
 });
 watch(searchKeyword, (val) => {
   searchSongList(val);
@@ -251,11 +259,11 @@ const handleUpdateMusicListLike = (like: boolean, index: number) => {
 };
 </script>
 <template>
-  <div class="p-8 pb-2">
+  <div class="p-8 pb-2 mx-auto max-w-[1400px]">
     <n-spin :show="isLoading">
-      <div v-if="songListDetail" class="flex justify-between">
-        <load-img ref="imageRef" :has-hover-scale="false" class-name="w-52 h-52" :src="songListDetail?.coverImgUrl" />
-        <div class="flex-1 ml-8">
+      <div v-if="songListDetail" class="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+        <load-img ref="imageRef" :has-hover-scale="false" class-name="pl-cover" :src="songListDetail?.coverImgUrl" />
+        <div class="flex-1 ml-0 sm:ml-8 min-w-0">
           <div class="flex items-center">
             <n-tag type="primary">
               歌单

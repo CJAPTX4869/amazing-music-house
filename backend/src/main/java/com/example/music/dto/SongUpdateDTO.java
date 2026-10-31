@@ -20,5 +20,6 @@ public class SongUpdateDTO {
     private String album;
 
     @Size(max = 50, message = "流派长度不能超过 50 个字符")
-    private String genre;
+    /** 标签（逗号分隔，最多 3 个） */
+    private String tags;
 }

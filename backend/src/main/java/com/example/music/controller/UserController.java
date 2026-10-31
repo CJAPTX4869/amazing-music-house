@@ -1,6 +1,7 @@
 package com.example.music.controller;
 
 import com.example.music.common.response.Result;
+import com.example.music.dto.ChangePasswordDTO;
 import com.example.music.dto.ProfileUpdateDTO;
 import com.example.music.security.PublicApi;
 import com.example.music.security.RequireLogin;
@@ -88,6 +89,18 @@ public class UserController {
     }
 
     /**
+     * 修改当前登录用户的密码（需验证旧密码）
+     */
+    @PutMapping("/password")
+    @RequireLogin
+    public Result<Void> changePassword(@Valid @RequestBody ChangePasswordDTO dto) {
+        Long userId = UserContext.getUserId();
+        userService.changePassword(userId, dto);
+        log.info("用户密码修改成功：userId={}", userId);
+        return Result.success("密码修改成功", null);
+    }
+
+    /**
      * 上传 / 替换当前登录用户的头像
      *
      * @return 新的头像绝对地址（客户端可直接用于 img src）
@@ -115,7 +128,8 @@ public class UserController {
         }
         ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                 .contentType(resolveImageMediaType(resource))
-                .header("Cache-Control", AVATAR_CACHE_CONTROL);
+                .header("Cache-Control", AVATAR_CACHE_CONTROL)
+                .header("X-Content-Type-Options", "nosniff");
         try {
             // 附 Last-Modified：浏览器后续请求携带 If-Modified-Since，图片未变时返回 304（无 body）
             builder.lastModified(resource.lastModified());

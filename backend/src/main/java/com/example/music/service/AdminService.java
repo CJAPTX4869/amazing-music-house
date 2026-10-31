@@ -21,6 +21,11 @@ public interface AdminService {
     void updateUserStatus(Long userId, Integer status, Long currentAdminId);
 
     /**
+     * 删除用户（连同其评论、点赞、播放/下载记录、歌单等数据）
+     */
+    void deleteUser(Long userId, Long currentAdminId);
+
+    /**
      * 歌曲上架 / 下架
      */
     void updateSongStatus(Long songId, Integer status);

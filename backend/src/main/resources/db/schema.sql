@@ -46,7 +46,9 @@ CREATE TABLE IF NOT EXISTS song (
   title           VARCHAR(200) NOT NULL          COMMENT '歌曲名',
   artist          VARCHAR(100) DEFAULT NULL      COMMENT '歌手',
   album           VARCHAR(100) DEFAULT NULL      COMMENT '专辑',
-  genre           VARCHAR(50)  DEFAULT NULL      COMMENT '流派',
+  tags            VARCHAR(150) DEFAULT NULL      COMMENT '标签（逗号分隔，最多3个）',
+  -- V3.2 迁移：genre 语义升级为"类型"（华语/欧美/日本/韩国/纯音乐/其他），旧流派值已归一映射；
+  -- 新增 tags 逗号分隔多标签（后端强制最多 3 个）
   duration        INT          DEFAULT 0         COMMENT '时长（秒）',
   original_name   VARCHAR(255) DEFAULT NULL      COMMENT '上传时的原始文件名',
   file_name       VARCHAR(255) NOT NULL          COMMENT '落盘文件名（UUID）',
@@ -106,7 +108,11 @@ CREATE TABLE IF NOT EXISTS playlist (
   update_time  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted      TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除',
   KEY idx_user (user_id),
-  KEY idx_type (type)
+  KEY idx_type (type),
+  -- 「我喜欢的音乐」每用户唯一：生成列仅对 type=1 取 user_id（其余为 NULL 不参与唯一），
+  -- 防并发首次收藏建出多个收藏歌单（普通歌单 type=0 仍可建任意多个）
+  fav_unique    BIGINT GENERATED ALWAYS AS (IF(type=1, user_id, NULL)) STORED,
+  UNIQUE KEY uk_favorite (fav_unique)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='歌单表';
 
 -- -------------------------------------------------------------
@@ -216,11 +222,11 @@ CREATE TABLE IF NOT EXISTS emoji (
 -- -------------------------------------------------------------
 -- 12. 管理员初始账号
 --    账号：admin
---    密码：admin123  （BCrypt 密文，强度 10，已用 compareSync 校验通过）
---    ⚠️ 上线前必须修改密码！
+--    密码：部署时由运维设定（此处为强口令 Music@2026!House 的 BCrypt 密文）
+--    ⚠️ 上线前必须再次修改密码！不要把明文写进任何文档或脚本！
 -- -------------------------------------------------------------
 INSERT IGNORE INTO sys_user (username, password, nickname, role, status)
-VALUES ('admin', '$2b$10$f5TkkIqQuOnDJc4mW0W8ruXGKzK2ydzdvW83y8CJ3XGrU.QdOt6cy', '系统管理员', 1, 1);
+VALUES ('admin', '$2a$10$8K36reQuxum8CAXqHAg1euaQpjSwudAzanEkcpyQVTwe7L7VHxL8a', '系统管理员', 1, 1);
 
 -- -------------------------------------------------------------
 -- 8. 验证
@@ -233,3 +239,18 @@ SELECT id, username, nickname, role, status, create_time FROM sys_user WHERE use
 
 SELECT '=== song 表歌词字段 ===' AS info;
 SHOW COLUMNS FROM song LIKE 'lyric_path';
+
+-- -------------------------------------------------------------
+-- V3.3 歌曲每日播放统计（播放接口实时累加，无需定时任务）
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS song_play_daily (
+  id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+  song_id    BIGINT  NOT NULL COMMENT '歌曲 ID',
+  stat_date  DATE    NOT NULL COMMENT '统计日期',
+  play_count INT     NOT NULL DEFAULT 0 COMMENT '当日播放次数',
+  UNIQUE KEY uk_song_date (song_id, stat_date),
+  KEY idx_date (stat_date)
+) COMMENT '歌曲每日播放统计（实时累加）';
+
+-- V3.3 歌单播放次数（播放全部时 +1，推荐歌单"高播放"排序用）
+ALTER TABLE playlist ADD COLUMN play_count INT NOT NULL DEFAULT 0 COMMENT '播放次数';

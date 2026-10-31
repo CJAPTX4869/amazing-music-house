@@ -33,6 +33,7 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
+    private final OnlineClientTracker onlineTracker;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -63,6 +64,15 @@ public class JwtInterceptor implements HandlerInterceptor {
                     && !handlerMethod.hasMethodAnnotation(PublicApi.class);
 
             if (requireAdmin) {
+                // 管理接口只允许本机回环访问。
+                // 8080 要为局域网用户端开放，而管理接口与用户接口同端口，
+                // 所以这里按 TCP 直连来源地址拦一道：远程设备即使拿到管理员口令也调不到。
+                // 用 getRemoteAddr() 而非 X-Forwarded-For —— 后者可随意伪造。
+                if (!isLoopback(request)) {
+                    log.warn("拒绝非本机访问管理接口：{} {} 来源={}",
+                            request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
+                    throw new BusinessException(ResultCode.FORBIDDEN, "管理接口仅限本机访问");
+                }
                 if (!UserContext.isLogin()) {
                     throw new BusinessException(ResultCode.UNAUTHORIZED);
                 }
@@ -81,6 +91,16 @@ public class JwtInterceptor implements HandlerInterceptor {
                                 Object handler, Exception ex) {
         // 必须清理：Tomcat 线程池会复用线程
         UserContext.clear();
+    }
+
+    /**
+     * 是否本机回环来源。IPv6 回环在不同 JDK 下可能写作 ::1 或展开形式，两种都认。
+     */
+    private static boolean isLoopback(HttpServletRequest request) {
+        String addr = request.getRemoteAddr();
+        return "127.0.0.1".equals(addr)
+                || "::1".equals(addr)
+                || "0:0:0:0:0:0:0:1".equals(addr);
     }
 
     /**
@@ -113,6 +133,12 @@ public class JwtInterceptor implements HandlerInterceptor {
                     dbUser.getUsername(),
                     dbUser.getRole()
             ));
+            // 在线客户端心跳：90 秒无活动自动判离线（运维后台展示用）
+            onlineTracker.touch(dbUser.getId(), dbUser.getUsername(),
+                    request.getHeader("X-Client-Platform"),
+                    request.getHeader("User-Agent"),
+                    request.getRemoteAddr(),
+                    request.getRemotePort());
         } catch (JwtException | IllegalArgumentException e) {
             log.debug("Token 解析失败（已忽略）：{}", e.getMessage());
         }

@@ -40,6 +40,8 @@ public class Playlist {
 
     /** 被收藏次数（冗余字段，收藏/取消时维护） */
     private Integer collectCount;
+    /** 播放次数（点播放全部时 +1；V3.3 新增） */
+    private Integer playCount;
 
     /** 状态：1-公开 0-私有 */
     private Integer status;

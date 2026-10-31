@@ -31,7 +31,6 @@ const forwardHover = useElementHover(forwardIconRef);
 const { backPath, forwardPath } = userHistory();
 const router = useRouter();
 const { state: defaultSearchKeyWord } = useAsyncState(Promise.resolve({ data: { showKeyword: '搜索音乐', realkeyword: '' } }).then(r => r.data), {});
-const { state: hotSearch, isLoading: hotSearchLoading } = useAsyncState(Promise.resolve({ data: { data: [] } }).then(r => r.data), {});
 const containerStyle = computed(() => {
   let hasLen = mainStore.searchKeyword.length > 0;
   let style: CSSProperties = {
@@ -233,27 +232,6 @@ onUnmounted(() => {
                 </n-tag>
               </n-space>
             </div>
-          </div>
-          <!-- 热搜榜 -->
-          <div v-show="!mainStore.searchKeyword.length">
-            <p class="pl-4 mt-4 opacity-70">
-              热搜榜
-            </p>
-            <n-spin :show="hotSearchLoading">
-              <div v-show="hotSearchLoading" class="h-60" />
-              <div v-for="(item, index) in hotSearch" :key="item.searchWord"
-                class="flex items-center p-5 hover:bg-gray-100 dark:hover:bg-gray-100/20 cursor-pointer"
-                @click="toSearchResult(item.searchWord)">
-                <span class="text-base"
-                  :style="{ color: index >= 0 && index <= 2 ? themeVars.primaryColor : themeVars.textColor1 }">
-                  {{ index + 1 }}
-                </span>
-                <div class="ml-4">
-                  <span :style="{ fontWeight: index >= 0 && index <= 2 ? 'bold' : 'initial' }"> {{ item.searchWord }}</span>
-                  <span class="pl-2 text-sm opacity-40">{{ item.score }}</span>
-                </div>
-              </div>
-            </n-spin>
           </div>
           <!-- 搜索建议 -->
           <div v-show="mainStore.searchKeyword.length > 0" class="py-4">

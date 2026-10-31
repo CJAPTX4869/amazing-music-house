@@ -12,34 +12,22 @@ import { mapSongs } from '@/utils/arr-map';
 import { formatCount } from '@/utils/commentContent';
 import { useMainStore } from '@/stores/main';
 import { useNanoid } from '@/hook/useNanoid';
+// V3.2 类型标签分类：全部=最新100首，其余按歌曲标签精确筛选
 const typeList = [
-  {
-    value: '0',
-    name: '全部'
-  },
-  {
-    value: '7',
-    name: '华语'
-  },
-  {
-    value: '96',
-    name: '欧美'
-  },
-  {
-    value: '8',
-    name: '日本'
-  },
-  {
-    value: '16',
-    name: '韩国'
-  }
+  { value: '全部', name: '全部' },
+  { value: '华语', name: '华语' },
+  { value: '欧美', name: '欧美' },
+  { value: '日本', name: '日本' },
+  { value: '韩国', name: '韩国' },
+  { value: '纯音乐', name: '纯音乐' },
+  { value: '其他', name: '其他' }
 ];
 const mainStore = useMainStore();
 // 评论角标 → 歌曲评论页（V3.1）
 const router = useRouter();
 const goComment = (item: any) => router.push(`/comment/song/${item.id}`);
 const newSongList = ref<any[]>([]);
-const activeType = ref('0');
+const activeType = ref('全部');
 const { stripedClass, themeVars } = useThemeStyle();
 const { currentId, set } = useNanoid();
 const tagColor = computed(() => {
@@ -89,6 +77,9 @@ fetchData();
 </script>
 
 <template>
+  <!-- 必须单根：外层 <transition mode="out-in"> 拿不到 fragment 的离场元素，
+       会导致跳走时新页面永远不插入（生产构建无告警，表现为白屏） -->
+  <div class="latest-music-view">
   <div class="sticky top-0  z-10  p-4 bg-slate-50 dark:bg-black">
     <span v-for="item in typeList" :key="item.value"
       class="px-2 rounded-md opacity-50 transition duration-150 ease-in-out cursor-pointer"
@@ -146,6 +137,7 @@ fetchData();
         </li>
       </ul>
     </transition>
+  </div>
   </div>
 </template>
 

@@ -39,6 +39,7 @@ const service: AxiosInstance = axios.create({
 /* ---------------- 请求拦截：注入 Token ---------------- */
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.headers['X-Client-Platform'] = 'admin'   // 管理后台独立分组
     if (authToken.value && config.headers) {
       config.headers.Authorization = `Bearer ${authToken.value}`
     }
@@ -102,3 +103,10 @@ service.interceptors.response.use(
 )
 
 export default service
+
+// 在线心跳：每 30 秒上报一次（未登录静默跳过）
+setInterval(() => {
+  if (authToken.value) {
+    service.get('/auth/profile').catch(() => {})
+  }
+}, 30000);

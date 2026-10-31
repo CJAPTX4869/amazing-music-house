@@ -1,6 +1,9 @@
 package com.example.music.controller.legacy;
 
 import com.example.music.common.exception.BusinessException;
+import com.example.music.security.CaptchaTicketManager;
+import com.example.music.security.OnlineClientTracker;
+import com.example.music.common.response.ResultCode;
 import com.example.music.dto.LoginDTO;
 import com.example.music.dto.PlaylistSaveDTO;
 import com.example.music.dto.SongQueryDTO;
@@ -63,6 +66,9 @@ public class LegacyController {
     private final SongService songService;
     private final PlaylistService playlistService;
     private final UserService userService;
+    private final CaptchaTicketManager captchaTickets;
+    private final com.example.music.mapper.PlaylistMapper playlistMapper;
+    private final OnlineClientTracker onlineTracker;
 
     /* ==================== 播放核心链路 ==================== */
 
@@ -137,15 +143,49 @@ public class LegacyController {
 
     /**
      * 新歌速递（映射为自有歌曲列表，按创建时间倒序）
+     * <p>
+     * 属于「翻库」入口（不带任何条件就能列出整库），按「未登录只能搜索+单曲播放」的口径要求登录。
      */
-    @GetMapping("/top/song")
-    public Map<String, Object> topSong(@RequestParam(value = "type", required = false) Integer type,
-                                       @RequestParam(value = "limit", defaultValue = "20") Integer limit,
-                                       HttpServletRequest request) {
+    @RequireLogin
+    /** 播放量最高 30 首（发现页"推荐歌曲"实时数据源） */
+    @GetMapping("/top/plays")
+    public Map<String, Object> topPlays(@RequestParam(defaultValue = "30") Integer limit,
+                                        HttpServletRequest request) {
         SongQueryDTO query = new SongQueryDTO();
         query.setPage(1);
         query.setSize(Math.min(Math.max(limit, 1), 50));
+        query.setSort("play_count,desc,comment_count,desc,id,asc");
+        PageVO<SongVO> page = songService.page(query, false);
+        return map("code", CODE_OK, "data",
+                LegacyConvertUtils.songs(page.getRecords(), baseUrl(request)));
+    }
+
+    /** 评论数最高 20 首（发现页"推荐歌曲"实时数据源） */
+    @GetMapping("/top/comments")
+    public Map<String, Object> topComments(@RequestParam(defaultValue = "20") Integer limit,
+                                           HttpServletRequest request) {
+        SongQueryDTO query = new SongQueryDTO();
+        query.setPage(1);
+        query.setSize(Math.min(Math.max(limit, 1), 50));
+        query.setSort("comment_count,desc,play_count,desc,id,asc");
+        PageVO<SongVO> page = songService.page(query, false);
+        return map("code", CODE_OK, "data",
+                LegacyConvertUtils.songs(page.getRecords(), baseUrl(request)));
+    }
+
+    @GetMapping("/top/song")
+    public Map<String, Object> topSong(@RequestParam(value = "type", required = false) Integer type,
+                                       @RequestParam(value = "limit", defaultValue = "20") Integer limit,
+                                       @RequestParam(value = "genre", required = false) String genre,
+                                       @RequestParam(value = "category", required = false) String category,
+                                       HttpServletRequest request) {
+        SongQueryDTO query = new SongQueryDTO();
+        query.setPage(1);
+        // category=latest100（或 全部 tab）：取最新 100 首；其他 tab 按类型标签筛选
+        boolean latest100 = "latest100".equals(category);
+        query.setSize(latest100 ? 100 : Math.min(Math.max(limit, 1), 50));
         query.setSort("create_time,desc");
+        query.setTag(genre);
         PageVO<SongVO> page = songService.page(query, false);
         return map("code", CODE_OK, "data",
                 LegacyConvertUtils.songs(page.getRecords(), baseUrl(request)));
@@ -162,6 +202,18 @@ public class LegacyController {
                                            HttpServletRequest request) {
         int size = Math.min(Math.max(limit, 1), 100);
         int pageNo = Math.max(offset, 0) / size + 1;
+
+        // 空关键词必须返回空态：底层 page 查询在无关键词时是「不带条件」的，
+        // 会把整库当成搜索结果吐出去（实测 keywords= 空或一个空格 → songCount=208 全库），
+        // 这等于给「未登录不能翻库」开了个后门。与 /search/suggest 的处理保持一致。
+        if (!StringUtils.hasText(keywords)) {
+            Map<String, Object> empty = new LinkedHashMap<>();
+            empty.put("songs", Collections.emptyList());
+            empty.put("songCount", 0);
+            empty.put("playlists", Collections.emptyList());
+            empty.put("playlistCount", 0);
+            return map("code", CODE_OK, "result", empty);
+        }
 
         // 歌单搜索（网易云 type=1000）：仅公开歌单，按歌单名模糊
         if (Integer.valueOf(1000).equals(type)) {
@@ -220,7 +272,11 @@ public class LegacyController {
 
     /**
      * 歌单详情（含歌曲；不校验归属，供旧前端展示任意歌单）
+     * <p>
+     * 必须要求登录：「我喜欢的音乐」这类系统歌单本身是公开属性，
+     * 匿名可查等于把每个用户的收藏列表摊开（实测 id=9 能匿名读到 26 首）。
      */
+    @RequireLogin
     @GetMapping("/playlist/detail")
     public Map<String, Object> playlistDetail(@RequestParam("id") Long id,
                                               HttpServletRequest request) {
@@ -230,8 +286,9 @@ public class LegacyController {
     }
 
     /**
-     * 歌单全部歌曲
+     * 歌单全部歌曲（同 {@link #playlistDetail}，登录后可见）
      */
+    @RequireLogin
     @GetMapping("/playlist/track/all")
     public Map<String, Object> playlistTrackAll(@RequestParam("id") Long id,
                                                 HttpServletRequest request) {
@@ -246,6 +303,13 @@ public class LegacyController {
     @GetMapping("/playlist/create")
     @RequireLogin
     public Map<String, Object> playlistCreate(@RequestParam("name") String name) {
+        // GET 参数绕过了 PlaylistSaveDTO 的 @Valid，这里手动对齐其约束（非空、≤100 字符）
+        if (!StringUtils.hasText(name)) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "歌单名不能为空");
+        }
+        if (name.length() > 100) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "歌单名不能超过 100 字符");
+        }
         PlaylistSaveDTO dto = new PlaylistSaveDTO();
         dto.setName(name);
         PlaylistVO vo = playlistService.create(dto, UserContext.getUserId());
@@ -302,12 +366,32 @@ public class LegacyController {
 
     /**
      * 推荐歌单（映射为自有公开歌单）
+     * <p>
+     * 也是「翻库」入口之一（一次列出全站歌单，含各人的「我喜欢的音乐」），按口径要求登录。
      */
+    @RequireLogin
+    /** 歌单播放计数（播放全部按钮触发；推荐歌单"高播放"排序数据源） */
+    @GetMapping("/playlist/play")
+    public Map<String, Object> playlistPlay(@RequestParam(value = "id") Long id) {
+        playlistMapper.incrementPlayCount(id);
+        return map("code", CODE_OK);
+    }
+
     @GetMapping("/personalized")
     public Map<String, Object> personalized(
             @RequestParam(value = "limit", defaultValue = "15") Integer limit) {
-        List<Map<String, Object>> result = playlistService.listPublic(limit)
-                .stream()
+        // V3.3 推荐歌单规则：最新创建 1 个 + 高播放量 2 个（去重后合并，最多 3 个）
+        List<PlaylistVO> latest = playlistService.listPublic(1);
+        List<PlaylistVO> hot = playlistService.listPublicByPlays(2);
+        List<PlaylistVO> merged = new java.util.ArrayList<>();
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        for (PlaylistVO p : latest) {
+            if (seen.add(p.getId())) merged.add(p);
+        }
+        for (PlaylistVO p : hot) {
+            if (seen.add(p.getId())) merged.add(p);
+        }
+        List<Map<String, Object>> result = merged.stream()
                 .map(p -> LegacyConvertUtils.playlist(p, null))
                 .collect(Collectors.toList());
         return map("code", CODE_OK, "result", result, "hasTaste", false);
@@ -353,6 +437,12 @@ public class LegacyController {
      */
     @PostMapping("/login")
     public Map<String, Object> login(@Valid @RequestBody LoginDTO dto, HttpServletRequest request) {
+        // 票据选填校验：听歌端登录带票（服务端校验并一次性消费）；Qt/安卓不带票保持兼容。
+        // 客户端既然提交了票据，就必须是真票——假票/过期票/重放一律 403，绝不静默放行。
+        if (dto.getTicket() != null && !dto.getTicket().isBlank()
+                && !captchaTickets.consumeForLogin(dto.getTicket())) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "请先完成抓娃娃人机验证");
+        }
         LoginVO vo = userService.login(dto);
         UserVO user = vo.getUser();
 
@@ -369,6 +459,10 @@ public class LegacyController {
      */
     @GetMapping("/logout")
     public Map<String, Object> logout() {
+        // 已登录则立即从"在线客户端"下线（否则要等 60 秒 TTL 自然过期）
+        if (UserContext.isLogin()) {
+            onlineTracker.removeUser(UserContext.getUserId());
+        }
         return map("code", CODE_OK);
     }
 

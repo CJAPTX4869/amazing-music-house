@@ -29,10 +29,51 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '上传歌曲', requiresAuth: true, requiresAdmin: true }
       },
       {
+        path: 'admin',
+        redirect: 'admin/songs'
+      },
+      {
         path: 'admin/songs',
         name: 'AdminSongs',
         component: () => import('@/views/admin/SongManageView.vue'),
         meta: { title: '歌曲管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: 'admin/song-ops',
+        name: 'admin-song-ops',
+        meta: { title: '歌曲状态总览', requiresAdmin: true },
+        component: () => import('@/views/admin/SongOpsView.vue'),
+      },
+      {
+        path: 'admin/online',
+        name: 'admin-online',
+        meta: { title: '在线客户端', requiresAdmin: true },
+        component: () => import('@/views/admin/OnlineClientsView.vue'),
+      },
+      {
+        path: 'admin/song-data/:id',
+        name: 'admin-song-data',
+        meta: { title: '歌曲数据', requiresAdmin: true },
+        props: true,
+        component: () => import('@/views/admin/SongDataView.vue'),
+      },
+      {
+        path: 'admin/play-daily',
+        name: 'admin-play-daily',
+        meta: { title: '每日播放统计', requiresAdmin: true },
+        component: () => import('@/views/admin/PlayDailyView.vue'),
+      },
+      {
+        path: 'admin/hot-songs',
+        name: 'admin-hot-songs',
+        meta: { title: '最火歌曲', requiresAdmin: true },
+        component: () => import('@/views/admin/HotSongsView.vue'),
+      },
+      {
+        path: 'admin/ops',
+        name: 'admin-ops',
+        meta: { title: '运维状态', requiresAdmin: true },
+        component: () => import('@/views/admin/OpsView.vue'),
       },
       {
         path: 'admin/users',

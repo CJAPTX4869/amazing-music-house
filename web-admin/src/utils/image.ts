@@ -123,11 +123,6 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob>
   })
 }
 
-/** 生成图片预览地址（调用方需在用完后 revoke） */
-export function createPreviewUrl(file: File | Blob) {
-  return URL.createObjectURL(file)
-}
-
 /** 校验图片文件（扩展名 + 体积） */
 export function validateImageFile(file: File): string | null {
   const ext = (file.name.split('.').pop() || '').toLowerCase()

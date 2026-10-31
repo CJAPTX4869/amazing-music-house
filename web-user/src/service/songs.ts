@@ -6,8 +6,16 @@ export function getRecommendSong() {
   return service.get('/top/song?type=0');
 }
 // 新歌速递
-export function getTopSong(type: 0 | 7 | 96 |8 | 16=0) {
-  return service.get(`/top/song?type=${type}`);
+/**
+ * 最新音乐（V3.2 类型标签版）
+ * - 全部：最新 100 首
+ * - 华语/欧美/日本/韩国/纯音乐/其他：按歌曲标签精确筛选
+ */
+export function getTopSong(type: string = '全部') {
+  if (type === '全部') {
+    return service.get('/top/song?category=latest100&limit=100');
+  }
+  return service.get(`/top/song?genre=${encodeURIComponent(type)}&limit=100`);
 }
 // 我喜欢的音乐列表
 export function getLikeList(uid: number) {

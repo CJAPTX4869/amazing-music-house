@@ -44,7 +44,16 @@ export const usePlayerStore = defineStore('player', () => {
     if (!playlist.value.length) return
     let index: number
     if (mode.value === 'random') {
-      index = Math.floor(Math.random() * playlist.value.length)
+      if (playlist.value.length > 1) {
+        // 随机换曲时排除当前歌曲，从其余候选索引中随机
+        const candidates = playlist.value
+          .map((_, i) => i)
+          .filter(i => i !== currentIndex.value)
+        index = candidates[Math.floor(Math.random() * candidates.length)]
+      } else {
+        // 仅剩一首时保持当前曲（当前曲不在列表中则从头开始）
+        index = currentIndex.value >= 0 ? currentIndex.value : 0
+      }
     } else {
       index = (currentIndex.value + 1) % playlist.value.length
     }

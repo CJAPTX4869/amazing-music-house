@@ -40,7 +40,8 @@
             :max="duration || 100"
             :show-tooltip="false"
             size="small"
-            @change="seek"
+            @input="dragging = true"
+            @change="seekThenRelease"
           />
           <span class="time">{{ formatDuration(duration) }}</span>
         </div>
@@ -95,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   VideoPlay,
@@ -131,6 +132,8 @@ watch(
   () => playerStore.currentUrl,
   url => {
     if (url) {
+      currentTime.value = 0
+      duration.value = playerStore.currentSong?.duration ?? 0
       audio.src = url
       audio.load()
       audio.play().catch(() => {
@@ -147,36 +150,59 @@ watch(
   }
 )
 
-watch(volume, v => {
-  audio.volume = v
-})
+watch(
+  volume,
+  v => {
+    audio.volume = v
+  },
+  { immediate: true }
+)
 
-audio.addEventListener('timeupdate', () => {
-  currentTime.value = audio.currentTime
-})
-audio.addEventListener('loadedmetadata', () => {
+const dragging = ref(false)
+
+const onTimeUpdate = () => {
+  // 拖动进度条期间不回写，否则滑块被 timeupdate 每 250ms 拉回、表现为拖不动
+  if (!dragging.value) currentTime.value = audio.currentTime
+}
+const onLoadedMetadata = () => {
   duration.value = audio.duration || (playerStore.currentSong?.duration ?? 0)
-})
-audio.addEventListener('ended', () => {
+}
+const onEnded = () => {
   if (playerStore.mode === 'single') {
     audio.currentTime = 0
     audio.play().catch(() => {})
   } else {
     playerStore.next()
   }
-})
-audio.addEventListener('error', () => {
+}
+const onError = () => {
   ElMessage.error('音频加载失败（可能格式不受浏览器支持，可尝试下载后播放）')
+}
+audio.addEventListener('timeupdate', onTimeUpdate)
+audio.addEventListener('loadedmetadata', onLoadedMetadata)
+audio.addEventListener('ended', onEnded)
+audio.addEventListener('error', onError)
+
+// 组件卸载（退出登录 / 跳出主布局）必须停播并解绑监听，
+// 否则音乐在登录页继续播放且无法停止，监听器闭包同时泄漏
+onBeforeUnmount(() => {
+  audio.pause()
+  audio.src = ''
+  audio.removeEventListener('timeupdate', onTimeUpdate)
+  audio.removeEventListener('loadedmetadata', onLoadedMetadata)
+  audio.removeEventListener('ended', onEnded)
+  audio.removeEventListener('error', onError)
 })
 
 function togglePlay() {
   playerStore.isPlaying = !playerStore.isPlaying
 }
 
-function seek(value: number | number[]) {
+function seekThenRelease(value: number | number[]) {
   // el-slider 的 change 回调类型为 Arrayable<number>，需兼容数组形式
   const target = Array.isArray(value) ? (value[0] ?? 0) : value
   audio.currentTime = target
+  dragging.value = false
 }
 
 async function handleDownload() {

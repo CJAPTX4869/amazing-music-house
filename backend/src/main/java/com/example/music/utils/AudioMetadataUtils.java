@@ -72,9 +72,8 @@ public final class AudioMetadataUtils {
     }
 
     /**
-     * 音频元数据
+     * 音频元数据（getter/setter 手写：该内部类在增量编译下 Lombok 偶发不生效）
      */
-    @Data
     public static class AudioMetadata {
         private String title;
         private String artist;
@@ -82,5 +81,16 @@ public final class AudioMetadataUtils {
         private String genre;
         /** 时长（秒），解析失败为 0 */
         private Integer duration = 0;
+
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+        public String getArtist() { return artist; }
+        public void setArtist(String artist) { this.artist = artist; }
+        public String getAlbum() { return album; }
+        public void setAlbum(String album) { this.album = album; }
+        public String getGenre() { return genre; }
+        public void setGenre(String genre) { this.genre = genre; }
+        public Integer getDuration() { return duration; }
+        public void setDuration(Integer duration) { this.duration = duration; }
     }
 }

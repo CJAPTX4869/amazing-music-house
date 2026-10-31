@@ -348,10 +348,14 @@ export const useMainStore = defineStore({
       localStorage.mySubscribeSongList = JSON.stringify(list);
     },
     addSearchHistory(value: string) {
-      if (this.searchHistory.includes(value)) {
-        return;
+      const v = (value ?? '').trim();
+      if (!v) return;                                  // 空串/纯空格不入历史
+      const i = this.searchHistory.indexOf(v);
+      if (i !== -1) this.searchHistory.splice(i, 1);   // 重复搜索：删旧值
+      this.searchHistory.unshift(v);                   // 最新搜索置顶
+      if (this.searchHistory.length > 20) {            // 上限 20 条
+        this.searchHistory.length = 20;
       }
-      this.searchHistory.push(value);
       localStorage.searchHistory = JSON.stringify(this.searchHistory);
     },
     removeSearchHistory(index: number) {

@@ -7,7 +7,7 @@ import { QueueMusicFilled } from '@vicons/material';
 import { Add, List, SparklesOutline, StarOutline, Heart } from '@vicons/ionicons5';
 import { NIcon, useLoadingBar } from 'naive-ui';
 import { computed, onMounted, ref, watch, type CSSProperties, type VNodeChild, KeepAlive } from 'vue';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { RouterLink, useRoute } from 'vue-router';
 import LoginModal, { type LoginModalExpose } from './LoginModal.vue';
 import CreatePlaylistModal, { type CreatePlaylistModalExpose } from '@/components/common/CreatePlaylistModal.vue';
 import obverser from '@/utils/obverser';
@@ -52,7 +52,6 @@ const menuOptions = [
 ];
 
 const route = useRoute();
-const router = useRouter();
 const loadingBar = useLoadingBar();
 
 let collapsed = ref(false);
@@ -78,7 +77,9 @@ const changeMenuOption = (myCreatePlayList: any[] = latestCreate, collectPlayLis
   latestCreate = [...myCreatePlayList];
   latestCollect = [...collectPlayList];
   if (!mainStore.isLogin) {
-    myMenuOptions.value = [noLoginOption, ...menuOptions];
+    // 未登录只能「搜索 + 单曲播放」：发现音乐/最新音乐/推荐歌单都是翻库入口，
+    // 后端已对这些接口加了 @RequireLogin，这里同步收掉入口，免得点进去只剩空列表
+    myMenuOptions.value = [noLoginOption];
   } else {
     // 接口返回的歌单列表第 0 项为"我喜欢的音乐"（见 classifySongsList），
     // 单独提为顶级菜单项（与"发现音乐/最新音乐/推荐歌单"平级），其余为自建歌单
@@ -86,7 +87,7 @@ const changeMenuOption = (myCreatePlayList: any[] = latestCreate, collectPlayLis
     myMenuOptions.value = [
       ...(likeItem
         ? [{
-          label: () => <span onClick={() => handlePlayListItemClick(likeItem)}>我喜欢的音乐</span>,
+          label: () => <RouterLink to={`/songList/${likeItem.id}`}>我喜欢的音乐</RouterLink>,
           key: `/songList/${likeItem.id}`,
           icon: () => <NIcon size={20} component={Heart} />
         }]
@@ -114,8 +115,8 @@ const changeMenuOption = (myCreatePlayList: any[] = latestCreate, collectPlayLis
         icon: () => <NIcon class="mr-2" size={20} component={User} />,
         children: myCreateOnly.map((item: any) => {
           return {
-            label: () => <span onClick={() => handlePlayListItemClick(item)}>{item.name}</span>,
-            key: item.name,
+            label: () => <RouterLink to={`/songList/${item.id}`}>{item.name}</RouterLink>,
+            key: `/songList/${item.id}`,
             icon: () => <NIcon size={20} component={QueueMusicFilled}></NIcon>,
             id: item.id
           };
@@ -132,8 +133,8 @@ const changeMenuOption = (myCreatePlayList: any[] = latestCreate, collectPlayLis
         icon: () => <NIcon component={StarOutline} />,
         children: collectPlayList.map((item: any) => {
           return {
-            label: () => <span onClick={() => handlePlayListItemClick(item)}>{item.name}</span>,
-            key: item.name,
+            label: () => <RouterLink to={`/songList/${item.id}`}>{item.name}</RouterLink>,
+            key: `/songList/${item.id}`,
             icon: () => <NIcon size={20} component={QueueMusicFilled}></NIcon>,
             id: item.id
           };
@@ -146,9 +147,6 @@ const changeMenuOption = (myCreatePlayList: any[] = latestCreate, collectPlayLis
 };
 const handleOpenLoginModalClick = () => {
   loginModalRef.value?.show();
-};
-const handlePlayListItemClick = (item: any) => {
-  router.push(`/songList/${item.id}`);
 };
 watch(() => route.path, (newVal) => {
   activeKey.value = newVal;
@@ -270,13 +268,14 @@ onMounted(() => {
     <n-back-top :right="mainStore.backTopLeft" :bottom="220" :visibility-height="800">
       <n-icon :component="BackToTop" />
     </n-back-top>
-    <n-layout :style="mainStyle">
+    <n-layout class="rightMain" :style="mainStyle">
       <!-- 修复：原实现把 keep-alive 套在 div 上（缓存无效）+ key 用 route.name
            （同路由换参数不重建，点另一个歌单像没反应），且进出场动画让每次跳转都"卡一下"。
            现在：key 用 fullPath（不同歌单各自缓存与重建）、keep-alive 套在组件上并限量、
-           过渡交给 CSS（时长已在 transition.css 缩短）。 -->
+           过渡交给 CSS（时长已在 transition.css 缩短）。
+           不用 mode="out-in"：任一页面写成多根节点就会让新页面永不插入且无任何报错。 -->
       <router-view v-slot="{ Component, route }">
-        <transition name="fade-transform" mode="out-in">
+        <transition name="fade-transform">
           <keep-alive :max="8">
             <component :is="Component" :key="route.fullPath" />
           </keep-alive>

@@ -205,7 +205,8 @@ public class PlaylistController {
     public ResponseEntity<Resource> cover(@PathVariable Long id) {
         Resource resource = playlistService.getCoverResource(id);
         if (resource == null) {
-            return ResponseEntity.notFound().build();
+            // 无封面的歌单回退内置默认封面：前端任何位置都不会出现空白图
+            resource = new org.springframework.core.io.ClassPathResource("static/default-cover.png");
         }
         return ResponseEntity.ok()
                 .contentType(resolveImageMediaType(resource))

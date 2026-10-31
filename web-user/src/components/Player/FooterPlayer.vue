@@ -21,8 +21,6 @@ import { useElementHover } from '@vueuse/core';
 import obverser from '@/utils/obverser';
 import type { HeartIconExpose } from '../common/HeartIcon.vue';
 import { useAudioLoadProgress } from './hook/useAudioLoadProgress';
-import { getOpusBlobDataByIdUsingIndex, openDatabase, saveSong } from '@/utils/initIndexDb'
-import { AudioIndexedData } from 'env';
 
 let slideValueChange = false;// 记录slider值是否手动发生了改变
 let triggerOriginalAudioTimeUpdate = true;
@@ -226,25 +224,6 @@ watch(
     if (!val.url) {
       requestSongData();
     }
-
-    // // 读取缓存数据
-    getOpusBlobDataByIdUsingIndex(mainStore.currentPlaySong?.id).then((res: AudioIndexedData) => {
-      // 创建一个指向 Blob 数据的临时 URL
-      if (res) {
-        const url = window.URL.createObjectURL(res.blob);
-
-        if (res.id === mainStore.currentPlaySong.id) {
-          // 检测当前是否正在播放
-          if (!audioRef.value?.paused) {
-            mainStore.playing = false;
-          }
-          mainStore.currentPlaySong.url = url;
-          setTimeout(() => {
-            mainStore.playing = true;
-          });
-        }
-      }
-    })
   }, { immediate: true }
 );
 watch(() => mainStore.playList, (val) => {
@@ -338,20 +317,6 @@ const updatePlayTime = async (time: number, triggerPlay = false) => {
 };
 // 媒体的第一帧加载完成 url 可以正常播放
 const handleLoadeddata = () => {
-  let data = {
-    id: mainStore.currentPlaySong.id,
-    url: mainStore.currentPlaySong.url,
-    name: mainStore.currentPlaySong.name,
-  };
-  // 判断url是为blob格式
-  if (!mainStore.currentPlaySong.url?.startsWith('blob:')) {
-    getOpusBlobDataByIdUsingIndex(data?.id).then((res) => {
-      // 没有则保存
-      if (!res) {
-        saveSong(data)
-      }
-    })
-  }
   if (mainStore.playing && audioRef.value?.paused) {
     audioRef.value?.play();
   }
@@ -371,23 +336,6 @@ watch(() => mainStore.currentPlaySong?.id, () => {
   retryCount = 0;
 });
 const handleError = () => {
-  // 判断url 是否为blob格式 blob 
-  if (mainStore.currentPlaySong.url?.startsWith('blob:')) {
-    // 读取缓存数据
-    getOpusBlobDataByIdUsingIndex(mainStore.currentPlaySong?.id).then((res: AudioIndexedData) => {
-      // 创建一个指向 Blob 数据的临时 URL
-      if (res) {
-        const url = window.URL.createObjectURL(res.blob);
-        if (res.id === mainStore.currentPlaySong.id) {
-          mainStore.currentPlaySong.url = url;
-
-        }
-      } else {
-        requestSongData();
-      }
-    });
-    return;
-  }
   if (audioRef.value?.error?.code === 4 || audioRef.value?.error?.code === 2) {
     if (retryCount >= MAX_RETRY_COUNT) {
       // window.$message.error('重试次数已达上限，无法获取歌曲资源。');
@@ -503,7 +451,6 @@ onMounted(() => {
   obverser.on('scrollComplete', () => {
     triggerOriginalAudioTimeUpdate = true;
   });
-  openDatabase();
 });
 onUnmounted(() => {
   document.body.removeEventListener('keypress', handlePressSpace);

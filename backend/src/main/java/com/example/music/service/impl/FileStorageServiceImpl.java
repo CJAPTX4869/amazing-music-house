@@ -84,6 +84,36 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     private final StorageProperties storageProperties;
 
+    /** 按文件头魔数判断是否真实音频：MP3(ID3/0xFFEx)/WAV(RIFF..WAVE)/OGG/FLAC/MP4-M4A(ftyp)/WMA(D0CF11E0) */
+    private boolean looksLikeAudio(MultipartFile file) {
+        byte[] head = new byte[12];
+        try (java.io.InputStream in = file.getInputStream()) {
+            int n = in.read(head);
+            if (n < 4) {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return startsWith(head, new byte[]{'I', 'D', '3'})                       // MP3 (ID3v2)
+                || (head[0] == (byte) 0xFF && (head[1] & 0xE0) == 0xE0)         // MP3 (MPEG 帧同步)
+                || (startsWith(head, new byte[]{'R', 'I', 'F', 'F'})
+                    && head[8] == 'W' && head[9] == 'A' && head[10] == 'V' && head[11] == 'E') // WAV
+                || startsWith(head, new byte[]{'O', 'g', 'g', 'S'})              // OGG
+                || startsWith(head, new byte[]{'f', 'L', 'a', 'C'})              // FLAC
+                || startsWith(head, new byte[]{'f', 't', 'y', 'p'})              // MP4/M4A
+                || startsWith(head, new byte[]{(byte) 0xD0, (byte) 0xCF, (byte) 0x11, (byte) 0xE0}); // WMA/ASF
+    }
+
+    private boolean startsWith(byte[] data, byte[] prefix) {
+        for (int i = 0; i < prefix.length; i++) {
+            if (i >= data.length || data[i] != prefix[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -107,6 +137,13 @@ public class FileStorageServiceImpl implements FileStorageService {
                 && !OCTET_STREAM.equalsIgnoreCase(contentType)
                 && !storageProperties.getAllowedMimeTypes().contains(contentType.toLowerCase(Locale.ROOT))) {
             throw new BusinessException(ResultCode.UNSUPPORTED_TYPE, "文件类型不匹配：" + contentType);
+        }
+
+        // 魔数校验：扩展名与 MIME 都可伪造，必须读文件头确认真实音频内容，
+        // 防止把任意字节改后缀传上来占存储/绕过内容属性
+        if (!looksLikeAudio(file)) {
+            throw new BusinessException(ResultCode.UNSUPPORTED_TYPE,
+                    "文件内容不是有效的音频（已按文件头校验，改扩展名无效）");
         }
 
         // 磁盘余量校验，避免写满磁盘导致服务不可用

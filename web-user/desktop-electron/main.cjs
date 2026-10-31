@@ -59,7 +59,7 @@ function readApiBase() {
 function startBackendIfPresent() {
   if (!AUTO_START_BACKEND) return;
   try {
-    const jar = path.join(process.resourcesPath || __dirname, 'backend', 'music-server-1.0.0.jar');
+    const jar = path.join(process.resourcesPath || __dirname, 'backend', 'music-server-1.0.1.jar');
     if (!fs.existsSync(jar)) return;
     execSync('java -version', { stdio: 'ignore' });   // 本机没有 java 就跳过
     const child = spawn('java', ['-jar', jar], {
@@ -86,7 +86,12 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // 后端地址由主进程读好后从命令行参数递进去。
+      // 不能让 preload 自己 require('fs'/'path') 去读 config.json —— Electron 20 起渲染进程
+      // 默认沙箱化，沙箱里的 preload 只有 electron 等少数模块，require 内置模块会直接
+      // "Unable to load preload script / module not found: path"，配置注入整个失效。
+      additionalArguments: ['--music-api-base=' + readApiBase()]
     }
   });
 

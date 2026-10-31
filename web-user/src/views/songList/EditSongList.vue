@@ -155,9 +155,9 @@ const handleFileChange = async (event: Event) => {
       <input v-if="!isFavoritePlaylist" id="file" ref="fileRef" class="hidden-input" type="file" accept="image/*" @change="handleFileChange">
       </div>
     </div>
+    <!-- 标签选择弹窗：必须留在根 div 内，外层 <transition> 不支持多根节点 -->
+    <select-song-list-tag-modal ref="selectSongListTagRef" :handle-complete-click="handleCompleteClick" />
   </div>
-  <!-- 标签选择弹窗 -->
-  <select-song-list-tag-modal ref="selectSongListTagRef" :handle-complete-click="handleCompleteClick" />
 </template>
 <style scoped>
 :deep(.submitFormItem>.n-form-item-label) {

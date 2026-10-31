@@ -64,6 +64,7 @@ public class EmojiController {
         return ResponseEntity.ok()
                 .contentType(resolveImageMediaType(resource))
                 .header(HttpHeaders.CACHE_CONTROL, EMOJI_CACHE_CONTROL)
+                .header("X-Content-Type-Options", "nosniff")
                 .body(resource);
     }
 

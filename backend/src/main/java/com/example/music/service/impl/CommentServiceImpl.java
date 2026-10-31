@@ -15,6 +15,7 @@ import com.example.music.mapper.CommentLikeMapper;
 import com.example.music.mapper.SongCommentMapper;
 import com.example.music.mapper.SongMapper;
 import com.example.music.mapper.UserMapper;
+import com.example.music.security.AdminAccess;
 import com.example.music.security.UserContext;
 import com.example.music.service.CommentService;
 import com.example.music.service.FileStorageService;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -91,6 +93,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public CommentVO create(Long songId, CommentCreateDTO dto, Long userId) {
         Song song = songMapper.selectById(songId);
         if (song == null || !Integer.valueOf(SONG_STATUS_ONLINE).equals(song.getStatus())) {
@@ -110,6 +113,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public CommentVO reply(Long commentId, ReplyCreateDTO dto, Long userId) {
         SongComment parent = commentMapper.selectById(commentId);
         if (parent == null) {
@@ -137,6 +141,9 @@ public class CommentServiceImpl implements CommentService {
         CommentVO vo = new CommentVO();
         vo.setId(reply.getId());
         vo.setContent(reply.getContent());
+        // 必须带上 createTime：前端把本方法返回的对象直接 append 进回复列表，
+        // 缺了它会让 <n-time :time="Date.parse(null)"> 收到 NaN，date-fns 抛 RangeError
+        vo.setCreateTime(reply.getCreateTime());
         vo.setLikeCount(0);
         vo.setLiked(false);
         vo.setUser(CommentUserVO.of(userId, userNickname(userId)));
@@ -144,32 +151,40 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long id, Long userId) {
         SongComment comment = commentMapper.selectById(id);
         if (comment == null) {
             throw new BusinessException(ResultCode.NOT_FOUND, "评论不存在或已删除");
         }
         boolean owner = userId != null && userId.equals(comment.getUserId());
-        if (!owner && !UserContext.isAdmin()) {
+        if (!owner && !AdminAccess.isLocalAdmin()) {
             throw new BusinessException(ResultCode.FORBIDDEN, "只能删除自己的评论");
         }
 
-        long removed = 1;
+        List<Long> deadIds = new ArrayList<>();
+        deadIds.add(id);
         if (comment.getParentId() == null) {
-            // 根评论：连带隐藏整楼回复
-            Long replyCount = commentMapper.selectCount(new LambdaQueryWrapper<SongComment>()
-                    .eq(SongComment::getParentId, id));
+            // 根评论：连带隐藏整楼回复，先取到回复 id 才能一并清掉它们的点赞
+            List<Long> replyIds = commentMapper.selectList(new LambdaQueryWrapper<SongComment>()
+                            .select(SongComment::getId)
+                            .eq(SongComment::getParentId, id))
+                    .stream().map(SongComment::getId).collect(Collectors.toList());
             commentMapper.delete(new LambdaQueryWrapper<SongComment>()
                     .eq(SongComment::getParentId, id));
-            removed += replyCount == null ? 0 : replyCount;
+            deadIds.addAll(replyIds);
         }
         commentMapper.deleteById(id);
-        changeSongCommentCount(comment.getSongId(), -removed);
+        // comment_like 是物理表且无外键级联，不清理就会永久累积指向已删评论的孤儿点赞行
+        commentLikeMapper.delete(new LambdaQueryWrapper<CommentLike>()
+                .in(CommentLike::getCommentId, deadIds));
+        changeSongCommentCount(comment.getSongId(), -(long) deadIds.size());
 
-        log.info("删除评论成功：id={}, by={}, removed={}", id, userId, removed);
+        log.info("删除评论成功：id={}, by={}, 连带 {} 条", id, userId, deadIds.size());
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void like(Long id, Long userId) {
         if (commentMapper.selectById(id) == null) {
             throw new BusinessException(ResultCode.NOT_FOUND, "评论不存在或已删除");
@@ -187,6 +202,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void unlike(Long id, Long userId) {
         int deleted = commentLikeMapper.delete(new LambdaQueryWrapper<CommentLike>()
                 .eq(CommentLike::getCommentId, id)

@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>music-server</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>music-server</name>
     <description>音乐文件管理系统 - 后端服务（JDK 11 + Spring Boot 2.7.18 + MyBatis-Plus）</description>
 
@@ -36,6 +36,17 @@
     </properties>
 
     <dependencies>
+        <!-- Redis：验证码票据 / 登录限流 / 歌曲分页缓存 / 运维监控 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!-- 服务器硬件监控（OSHI，参考 zzyl/若依运维模块） -->
+        <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>6.6.3</version>
+        </dependency>
         <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -126,6 +137,15 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- 关闭增量编译：Lombok 注解处理器在增量模式下会随机失效
+                         （表现为 @Data 类的 getter/setter 找不到符号），全量编译稳定 -->
+                    <useIncrementalCompilation>false</useIncrementalCompilation>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

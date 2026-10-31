@@ -27,7 +27,8 @@ public class Song {
 
     private String album;
 
-    private String genre;
+    /** 标签（逗号分隔，最多 3 个；V3.2 新增，替代原 genre 风格列） */
+    private String tags;
 
     /** 时长（秒） */
     private Integer duration;

@@ -10,6 +10,7 @@ import com.example.music.dto.SongUpdateDTO;
 import com.example.music.dto.SongUploadDTO;
 import com.example.music.entity.Song;
 import com.example.music.security.RequireAdmin;
+import com.example.music.security.RequireLogin;
 import com.example.music.security.UserContext;
 import com.example.music.service.FileStorageService;
 import com.example.music.service.SongService;
@@ -44,6 +45,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -54,9 +56,6 @@ import java.util.List;
 @RequestMapping("/songs")
 @RequiredArgsConstructor
 public class SongController {
-
-    /** 单次 Range 响应最大字节数（8MB），避免一次返回过大片段 */
-    private static final long MAX_STREAM_CHUNK = 8L * 1024 * 1024;
 
     /** 封面缓存策略：图片内容不变（换封面会换 URL 语义由 id 固定，故取短缓存 + 协商） */
     private static final String COVER_CACHE_CONTROL = "public, max-age=3600";
@@ -122,8 +121,13 @@ public class SongController {
     /* ==================== 公开接口 ==================== */
 
     /**
-     * 歌曲列表（公开，仅返回上架歌曲）
+     * 歌曲列表（需登录，仅返回上架歌曲）
+     * <p>
+     * 这是「翻库」入口：不带 keyword 时会把整库按分页全列出来。
+     * 按产品口径，未登录只允许「搜索 + 单曲播放」，所以这里要求登录；
+     * 管理端本来就带 token，不受影响。
      */
+    @RequireLogin
     @GetMapping
     public Result<PageVO<SongVO>> list(@Valid SongQueryDTO query) {
         // 公开端忽略 status 参数，防止绕过下架限制
@@ -158,6 +162,7 @@ public class SongController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, buildContentDisposition(song))
                 .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength))
+                .header("X-Content-Type-Options", "nosniff")
                 .contentType(resolveMediaType(song))
                 .body(resource);
     }
@@ -175,24 +180,41 @@ public class SongController {
         }
         long contentLength = contentLengthOf(resource);
         MediaType mediaType = resolveMediaType(song);
+        String etag = etagOf(song, contentLength);
+        // HTTP 日期只有秒级精度，抹掉毫秒才不会让校验器永远对不上
+        long lastModified = truncatedToSecond(lastModifiedOf(song));
 
         List<HttpRange> ranges = headers.getRange();
 
-        // 无 Range：完整响应
+        // 无 Range：完整响应（客户端已持有同一份时回 304）
         if (ranges.isEmpty()) {
-            songService.recordPlayAsync(id);
-            return ResponseEntity.status(HttpStatus.OK)
-                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                    .contentType(mediaType)
-                    .contentLength(contentLength)
-                    .body(new ResourceRegion(resource, 0, contentLength));
+            return fullResponse(song, resource, contentLength, mediaType, etag, lastModified,
+                    etagMatches(headers.getFirst(HttpHeaders.IF_NONE_MATCH), etag));
         }
 
-        // 有 Range：206 部分内容
+        // 有 Range：If-Range 的校验器与当前内容不一致（文件被换过）时，
+        // 按 RFC 7233 必须退回 200 全量，否则客户端会把新文件当成旧内容来定位
+        String ifRange = headers.getFirst(HttpHeaders.IF_RANGE);
+        if (StringUtils.hasText(ifRange) && !etagMatches(ifRange, etag)) {
+            return fullResponse(song, resource, contentLength, mediaType, etag, lastModified, false);
+        }
+
         HttpRange range = ranges.get(0);
         long start = range.getRangeStart(contentLength);
         long end = range.getRangeEnd(contentLength);
-        long rangeLength = Math.min(MAX_STREAM_CHUNK, end - start + 1);
+
+        // 起点越过文件尾时以前会算出负长度，异常被全局处理器包成「HTTP 200 + 84 字节 JSON」，
+        // 播放器把这段 JSON 当音频尾巴吃掉，表现为播到中途突然从头再来。按 RFC 7233 应回 416。
+        if (start < 0 || start >= contentLength || end < start) {
+            return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                    .eTag(etag)
+                    .header(HttpHeaders.CONTENT_RANGE, "bytes */" + contentLength)
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .build();
+        }
+        // 不再对区间长度设上限：播放器发 bytes=0- 就是想要到文件尾，
+        // 截成 8MB 会让它以为媒体到此结束（ResourceRegion 本身就是分块流式写出，不占整块内存）。
+        long rangeLength = end - start + 1;
 
         // 仅首次请求（start=0）计入播放数，避免拖拽进度被重复计数
         if (start == 0) {
@@ -200,9 +222,84 @@ public class SongController {
         }
 
         return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                .eTag(etag)
+                .lastModified(lastModified)
+                .header(HttpHeaders.CACHE_CONTROL, STREAM_CACHE_CONTROL)
                 .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                .header("X-Content-Type-Options", "nosniff")
                 .contentType(mediaType)
                 .body(new ResourceRegion(resource, start, rangeLength));
+    }
+
+    /**
+     * 完整内容响应，或命中 If-None-Match 时回 304。
+     * 304 不计播放数 —— 客户端用的是本地缓存，没有真的再下一遍。
+     */
+    private ResponseEntity<ResourceRegion> fullResponse(Song song, Resource resource, long contentLength,
+                                                        MediaType mediaType, String etag, long lastModified,
+                                                        boolean notModified) {
+        if (notModified) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(etag)
+                    .lastModified(lastModified)
+                    .header(HttpHeaders.CACHE_CONTROL, STREAM_CACHE_CONTROL)
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .build();
+        }
+        songService.recordPlayAsync(song.getId());
+        return ResponseEntity.status(HttpStatus.OK)
+                .eTag(etag)
+                .lastModified(lastModified)
+                .header(HttpHeaders.CACHE_CONTROL, STREAM_CACHE_CONTROL)
+                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                .header("X-Content-Type-Options", "nosniff")
+                .contentType(mediaType)
+                .contentLength(contentLength)
+                .body(new ResourceRegion(resource, 0, contentLength));
+    }
+
+    /**
+     * 音频流缓存策略：max-age=0 + must-revalidate —— 每次回源校验，
+     * 命中就是几十字节的 304（重听不再重下一整首），文件被替换则立刻失效。
+     */
+    private static final String STREAM_CACHE_CONTROL = "private, max-age=0, must-revalidate";
+
+    /** 强校验器：优先用库里登记的 MD5（换文件必变）；缺失时退回「大小 + 更新时间」组合 */
+    private String etagOf(Song song, long contentLength) {
+        String md5 = song.getFileMd5();
+        if (StringUtils.hasText(md5)) {
+            return "\"" + md5.trim() + "\"";
+        }
+        return "\"ms-" + contentLength + "-" + lastModifiedOf(song) + "\"";
+    }
+
+    private long lastModifiedOf(Song song) {
+        return song.getUpdateTime() == null ? 0L
+                : song.getUpdateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    private long truncatedToSecond(long epochMillis) {
+        return epochMillis / 1000L * 1000L;
+    }
+
+    /** ETag 比较：忽略弱校验器 W/ 前缀，支持通配 * */
+    private boolean etagMatches(String headerValue, String etag) {
+        if (!StringUtils.hasText(headerValue)) {
+            return false;
+        }
+        for (String part : headerValue.split(",")) {
+            String v = part.trim();
+            if ("*".equals(v)) {
+                return true;
+            }
+            if (v.startsWith("W/")) {
+                v = v.substring(2);
+            }
+            if (v.equals(etag)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* ==================== 歌词（V3.0 新增） ==================== */
@@ -252,11 +349,13 @@ public class SongController {
     public ResponseEntity<Resource> cover(@PathVariable Long id) {
         Resource resource = songService.getCoverResource(id);
         if (resource == null) {
-            return ResponseEntity.notFound().build();
+            // 无封面的歌曲回退内置默认封面：前端任何位置都不会出现空白图
+            resource = new org.springframework.core.io.ClassPathResource("static/default-cover.png");
         }
         return ResponseEntity.ok()
                 .contentType(resolveImageMediaType(resource))
                 .header(HttpHeaders.CACHE_CONTROL, COVER_CACHE_CONTROL)
+                .header("X-Content-Type-Options", "nosniff")
                 .body(resource);
     }
 

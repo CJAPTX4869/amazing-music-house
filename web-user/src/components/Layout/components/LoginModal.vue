@@ -1,7 +1,7 @@
 <template>
   <n-modal v-model:show="showModal" :mask-closable="false" transform-origin="center">
     <n-card
-      style="width: 350px;"
+      style="width: 470px; max-width: 94vw; max-height: 86vh; overflow-y: auto;"
       :bordered="false"
       size="small"
       preset="dialog"
@@ -15,7 +15,8 @@
           />
         </div>
       </template>
-      <div class="flex flex-col items-center">
+      <!-- 第一步：账密表单（提交后进入第二步验证，验证码不再与表单同屏） -->
+      <div v-if="step === 'form'" class="flex flex-col items-center">
         <p class="mt-5 text-3xl">
           {{ isRegister ? '注册账号' : '账号登录' }}
         </p>
@@ -74,6 +75,16 @@
           </span>
         </div>
       </div>
+
+      <!-- 第二步：点过登录/注册后弹出的抓娃娃验证（组件自带标题，与表单互斥只显示一个） -->
+      <div v-else class="flex flex-col items-center pb-2">
+        <div class="w-full px-2">
+          <ClawCaptcha @verify="onCaptchaVerified" />
+        </div>
+        <n-button quaternary size="small" class="mt-1" @click="backToForm">
+          返回修改账号信息
+        </n-button>
+      </div>
     </n-card>
   </n-modal>
 </template>
@@ -81,8 +92,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { CloseOutline } from '@vicons/ionicons5';
-import { login, register } from '@/service';
+import { login, register, captchaChallenge, captchaVerify } from '@/service';
 import { useMainStore } from '@/stores/main';
+import ClawCaptcha from '@/components/clawcaptcha/ClawCaptcha.vue';
 
 const TOKEN_KEY = 'music_token';
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{4,20}$/;
@@ -96,6 +108,36 @@ const showModal = ref(false);
 const isLoading = ref(false);
 const isRegister = ref(false);
 const mainStore = useMainStore();
+
+// 两步式登录：step=form 填账密，step=captcha 弹出抓娃娃验证（账密对错此时还不知道，
+// 服务端在验证通过后才判账密）。抓错=验证失败（组件不 emit verify，继续抓），抓对=自动提交。
+const step = ref<'form' | 'captcha'>('form');
+const captchaVerified = ref(false);
+const captchaTicket = ref('');
+async function fetchTicket() {
+  try {
+    const r = await captchaChallenge();
+    captchaTicket.value = r.data?.data?.ticket || '';
+  } catch {
+    captchaTicket.value = '';
+    window.$message?.error?.('获取验证票据失败，请检查服务端');
+  }
+}
+async function onCaptchaVerified() {
+  try {
+    await captchaVerify(captchaTicket.value);
+  } catch {
+    window.$message?.error?.('验证票据确认失败，请重试');
+    return;
+  }
+  // 票据已确认：抓对了就算验证通过，自动提交（账密错由后端返回明确提示）
+  captchaVerified.value = true;
+  await handleSubmit(true);
+}
+function backToForm() {
+  step.value = 'form';
+  captchaVerified.value = false;
+}
 
 const formRef = ref();
 const formData = ref({
@@ -140,6 +182,9 @@ const rules = computed(() => ({
 
 defineExpose({
   show() {
+    step.value = 'form';
+    captchaVerified.value = false;
+    fetchTicket();
     showModal.value = true;
   },
   close() {
@@ -177,10 +222,16 @@ const resetForm = () => {
   formRef.value?.restoreValidation();
 };
 
-const handleSubmit = async () => {
+const handleSubmit = async (fromCaptcha?: boolean) => {
   try {
     await formRef.value?.validate();
   } catch {
+    return;
+  }
+  // 自动提交（验证通过回调）直接放行；手动点击则先进入验证步骤
+  if (fromCaptcha !== true) {
+    step.value = 'captcha';
+    fetchTicket();
     return;
   }
   isLoading.value = true;
@@ -197,7 +248,7 @@ const handleSubmit = async () => {
         return;
       }
       // 2) 注册成功 → 用同一账号立即登录，免去二次输入
-      const loginRes = await login(formData.value.username, formData.value.password);
+      const loginRes = await login(formData.value.username, formData.value.password, captchaTicket.value);
       if (loginRes.data.code === 200) {
         saveLoginState(loginRes.data);
         window.$message.success('注册成功，已自动登录');
@@ -210,18 +261,23 @@ const handleSubmit = async () => {
         formData.value.password = '';
         formData.value.confirmPassword = '';
         formData.value.nickname = '';
+        step.value = 'form';
+        captchaVerified.value = false;
       }
       return;
     }
 
-    const res = await login(formData.value.username, formData.value.password);
+    const res = await login(formData.value.username, formData.value.password, captchaTicket.value);
     if (res.data.code === 200) {
       saveLoginState(res.data);
       window.$message.success('登录成功');
       showModal.value = false;
       resetForm();
     } else {
-      window.$message.error(res.data.message || '登录失败');
+      // 账密错误：验证已通过但登录失败，回表单并重置验证（票据已消费）
+      window.$message.error(res.data.message || '用户名或密码错误');
+      step.value = 'form';
+      captchaVerified.value = false;
     }
   } catch (error: any) {
     // 校验类错误（HTTP 4xx）由后端返回 message

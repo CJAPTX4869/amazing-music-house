@@ -6,8 +6,8 @@ export function getSongList(params: SongQuery) {
   return request.get<never, PageResult<SongVO>>('/songs', { params })
 }
 
-/** 歌曲详情 */
-export function getSongDetail(id: number) {
+/** 单曲详情（状态总览点歌名 → 直达编辑弹窗用） */
+export function getSongDetail(id: number | string) {
   return request.get<never, SongVO>(`/songs/${id}`)
 }
 

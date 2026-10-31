@@ -77,6 +77,7 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEdit(row as SongVO)">编辑</el-button>
+            <el-button link type="primary" @click="router.push(`/admin/song-data/${(row as SongVO).id}`)">数据</el-button>
             <el-button link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row as SongVO)">
               {{ row.status === 1 ? '下架' : '上架' }}
             </el-button>
@@ -145,8 +146,9 @@
         <el-form-item label="专辑">
           <el-input v-model="editForm.album" maxlength="100" />
         </el-form-item>
-        <el-form-item label="流派">
-          <el-input v-model="editForm.genre" maxlength="50" />
+        <el-form-item label="标签">
+          <el-input v-model="editForm.tags" maxlength="150"
+            placeholder="逗号分隔，最多 3 个（超出自动截断）" />
         </el-form-item>
 
         <!-- 歌词：选择 .lrc / .txt 后立即上传（与封面"选择即上传"一致） -->
@@ -183,9 +185,10 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
-import { updateSong, deleteSong, batchDeleteSongs, uploadCover, uploadLyric, coverUrl } from '@/api/song'
+import { updateSong, deleteSong, batchDeleteSongs, uploadCover, uploadLyric, coverUrl, getSongDetail } from '@/api/song'
 import { getAdminSongList, updateSongStatus } from '@/api/admin'
 import { compressToSquare, validateImageFile } from '@/utils/image'
 import type { SongUpdateDTO, SongVO } from '@/types'
@@ -203,9 +206,12 @@ const query = reactive({
   size: 10
 })
 
+const route = useRoute()
+const router = useRouter()
+
 const editVisible = ref(false)
 const editId = ref<number | null>(null)
-const editForm = reactive<SongUpdateDTO>({ title: '', artist: '', album: '', genre: '' })
+const editForm = reactive<SongUpdateDTO>({ title: '', artist: '', album: '', tags: '' })
 
 /* ---------------- 封面 ---------------- */
 const coverInputRef = ref<HTMLInputElement>()
@@ -307,7 +313,11 @@ async function handleLyricSelect(e: Event) {
   }
 }
 
+// 请求序号：快速搜索/切页时丢弃过期响应，防止旧结果覆盖新结果
+let reqSeq = 0
+
 async function loadList() {
+  const seq = ++reqSeq
   loading.value = true
   try {
     const res = await getAdminSongList({
@@ -316,6 +326,7 @@ async function loadList() {
       page: query.page,
       size: query.size
     })
+    if (seq !== reqSeq) return
     list.value = res.records
     total.value = res.total
   } catch {
@@ -334,7 +345,7 @@ function openEdit(row: SongVO) {
   editForm.title = row.title
   editForm.artist = row.artist || ''
   editForm.album = row.album || ''
-  editForm.genre = row.genre || ''
+  editForm.tags = row.tags || ''
   editingHasLyric.value = !!row.hasLyric
   // 带 updateTime 作版本号，替换封面后不会被浏览器缓存挡住
   const url = row.coverUrl ? coverUrl(row.id, row.updateTime) : ''
@@ -399,6 +410,8 @@ async function handleDelete(row: SongVO) {
   try {
     await deleteSong(row.id)
     ElMessage.success('已删除')
+    // 删掉当前页最后一条后回退一页，避免停留在空页
+    if (list.value.length === 1 && query.page > 1) query.page -= 1
     loadList()
   } catch {
     // 拦截器已提示
@@ -417,8 +430,11 @@ async function handleBatchDelete() {
     return
   }
   try {
+    const deleteCount = selectedIds.value.length
     await batchDeleteSongs(selectedIds.value)
     ElMessage.success('已批量删除')
+    // 当前页被整页删空后回退一页，避免停留在空页
+    if (deleteCount === list.value.length && query.page > 1) query.page -= 1
     selectedIds.value = []
     loadList()
   } catch {
@@ -426,7 +442,27 @@ async function handleBatchDelete() {
   }
 }
 
-onMounted(loadList)
+// 状态总览明细点歌名跳来（/admin/songs?edit=<id>）：直接弹出该歌的编辑弹窗。
+// 先开弹窗再清 URL；watch 兜底组件复用/再次带参进入的场景。
+async function openEditFromQuery() {
+  const qid = Number(route.query.edit)
+  if (!qid) return
+  try {
+    openEdit(await getSongDetail(qid))
+  } catch {
+    ElMessage.warning('歌曲不存在或已被删除')
+  }
+  router.replace({ path: '/admin/songs' })
+}
+
+onMounted(() => {
+  loadList()
+  openEditFromQuery()
+})
+
+watch(() => route.query.edit, v => {
+  if (v) openEditFromQuery()
+})
 </script>
 
 <style scoped lang="scss">

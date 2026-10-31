@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.music.common.exception.BusinessException;
 import com.example.music.common.response.ResultCode;
 import com.example.music.constant.RoleConstants;
+import com.example.music.dto.ChangePasswordDTO;
+import com.example.music.dto.ForgotPasswordDTO;
 import com.example.music.dto.LoginDTO;
 import com.example.music.dto.ProfileUpdateDTO;
 import com.example.music.dto.RegisterDTO;
@@ -12,22 +14,23 @@ import com.example.music.entity.UserFollow;
 import com.example.music.mapper.UserFollowMapper;
 import com.example.music.mapper.UserMapper;
 import com.example.music.security.JwtUtil;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import com.example.music.service.FileStorageService;
 import com.example.music.service.UserService;
 import com.example.music.vo.LoginVO;
 import com.example.music.vo.UserVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 用户与认证服务实现
@@ -45,21 +48,18 @@ public class UserServiceImpl implements UserService {
     private static final int MAX_FAILURES = 5;
     /** 触发限流后的锁定时长（毫秒），10 分钟 */
     private static final long LOCK_DURATION_MS = 10 * 60 * 1000L;
-    /** 记录数量上限，超过则触发一次清理，防止内存无限增长 */
-    private static final int MAX_ATTEMPT_RECORDS = 1000;
-
-    /**
-     * 登录失败记录：key = 用户名
-     * <p>
-     * 说明：本地内存实现，适用于单机部署；多实例部署时应改用 Redis 等集中式存储。
-     */
-    private final Map<String, LoginAttempt> loginAttempts = new ConcurrentHashMap<>();
+    /** 登录失败记录与锁定状态存 Redis（10 分钟窗口），重启不丢、多实例共享 */
+    private final StringRedisTemplate redis;
 
     private final UserMapper userMapper;
     private final UserFollowMapper userFollowMapper;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
+
+    /** 忘记密码的部署恢复码（RECOVERY_CODE，放 .env.local）；为空时找回功能整体禁用 */
+    @Value("${app.recovery-code:}")
+    private String recoveryCode;
 
     @Override
     public UserVO register(RegisterDTO dto) {
@@ -80,6 +80,16 @@ public class UserServiceImpl implements UserService {
 
         log.info("用户注册成功：username={}, id={}", user.getUsername(), user.getId());
         return UserVO.of(user);
+    }
+
+    @Override
+    public boolean isAdminAccount(String username) {
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username).last("LIMIT 1"));
+        return user != null && Integer.valueOf(1).equals(user.getRole());
     }
 
     @Override
@@ -104,7 +114,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 2. 登录成功：清除失败记录
-        loginAttempts.remove(key);
+        redis.delete("login:fail:" + key);
 
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         log.info("登录成功：username={}, id={}, role={}", user.getUsername(), user.getId(), user.getRole());
@@ -228,22 +238,14 @@ public class UserServiceImpl implements UserService {
      * 检查是否处于锁定状态
      */
     private void checkLoginAttempt(String key) {
-        LoginAttempt attempt = loginAttempts.get(key);
-        if (attempt == null) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (attempt.lockedUntil > now) {
-            long minutes = (attempt.lockedUntil - now) / 60000 + 1;
+        String lockKey = "login:lock:" + key;
+        Boolean locked = redis.hasKey(lockKey);
+        if (Boolean.TRUE.equals(locked)) {
+            Long ttl = redis.getExpire(lockKey);
+            long minutes = (ttl == null || ttl < 0 ? LOCK_DURATION_MS / 60000 : ttl / 60 + 1);
             log.warn("登录尝试过于频繁，已临时锁定：username={}, 剩余 {} 分钟", key, minutes);
             throw new BusinessException(ResultCode.LOGIN_FAILED,
                     "密码错误次数过多，请 " + minutes + " 分钟后再试");
-        }
-        // 仅当"曾被锁定且锁定已过期"时才清除记录、重新开始计数。
-        // 注意：未锁定（lockedUntil == 0）时必须保留记录，否则失败次数会被清空、
-        // 永远累计不到阈值，导致限流形同虚设。
-        if (attempt.lockedUntil > 0) {
-            loginAttempts.remove(key);
         }
     }
 
@@ -251,54 +253,47 @@ public class UserServiceImpl implements UserService {
      * 记录一次失败，达到阈值则锁定
      */
     private void recordFailure(String key) {
-        LoginAttempt attempt = loginAttempts.computeIfAbsent(key, k -> new LoginAttempt());
-        long now = System.currentTimeMillis();
-
-        // 若上次失败已超过锁定时长，视为新一轮计数
-        if (now - attempt.lastFailureAt > LOCK_DURATION_MS) {
-            attempt.count = 0;
+        String failKey = "login:fail:" + key;
+        Long count = redis.opsForValue().increment(failKey);
+        if (count != null && count == 1) {
+            redis.expire(failKey, Duration.ofMillis(LOCK_DURATION_MS));
         }
-        attempt.count++;
-        attempt.lastFailureAt = now;
-
-        if (attempt.count >= MAX_FAILURES) {
-            attempt.lockedUntil = now + LOCK_DURATION_MS;
+        if (count != null && count >= MAX_FAILURES) {
+            redis.opsForValue().set("login:lock:" + key, "1", Duration.ofMillis(LOCK_DURATION_MS));
+            redis.delete(failKey);
             log.warn("账号因多次登录失败被锁定 10 分钟：username={}", key);
         }
-
-        // 记录过多时做一次清理，避免内存无限增长
-        if (loginAttempts.size() > MAX_ATTEMPT_RECORDS) {
-            cleanExpiredAttempts();
-        }
     }
 
-    /**
-     * 定时清理已过期的失败记录（每 30 分钟执行一次）
-     */
-    @Scheduled(fixedDelay = 30 * 60 * 1000L, initialDelay = 30 * 60 * 1000L)
-    public void cleanExpiredAttempts() {
-        long now = System.currentTimeMillis();
-        int before = loginAttempts.size();
-        // 清理"未锁定且最近一次失败已超过锁定时长"的记录
-        loginAttempts.entrySet().removeIf(entry -> {
-            LoginAttempt attempt = entry.getValue();
-            return attempt.lockedUntil <= now && (now - attempt.lastFailureAt) > LOCK_DURATION_MS;
-        });
-        int removed = before - loginAttempts.size();
-        if (removed > 0) {
-            log.debug("清理过期登录失败记录 {} 条，剩余 {}", removed, loginAttempts.size());
-        }
-    }
 
     /**
      * 登录失败记录载体
      */
-    private static class LoginAttempt {
-        /** 连续失败次数 */
-        private int count;
-        /** 最近一次失败时间 */
-        private long lastFailureAt;
-        /** 锁定截止时间戳（0 表示未锁定） */
-        private long lockedUntil;
+
+    @Override
+    public void forgotPassword(ForgotPasswordDTO dto) {
+        if (!StringUtils.hasText(recoveryCode)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "服务端未配置恢复码，请联系管理员重置密码");
+        }
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, dto.getUsername().trim()));
+        // 用户名与恢复码统一报错，避免被用来枚举有效用户名
+        if (user == null || !recoveryCode.equals(dto.getRecoveryCode())) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "用户名或恢复码错误");
+        }
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userMapper.updateById(user);
+        log.info("用户通过恢复码重置密码成功：userId={}", user.getId());
+    }
+
+    @Override
+    public void changePassword(Long userId, ChangePasswordDTO dto) {
+        User user = userMapper.selectById(userId);
+        if (user == null || !passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "旧密码错误");
+        }
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userMapper.updateById(user);
+        log.info("用户修改密码成功：userId={}", userId);
     }
 }

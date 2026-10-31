@@ -48,6 +48,11 @@ public interface PlaylistService {
     List<PlaylistVO> listPublic(int limit);
 
     /**
+     * 公开歌单按播放量降序（推荐歌单"高播放"位用；V3.3 新增）
+     */
+    List<PlaylistVO> listPublicByPlays(int limit);
+
+    /**
      * 编辑歌单（"我喜欢的音乐"不可重命名）
      */
     PlaylistVO update(Long id, PlaylistSaveDTO dto, Long userId);
@@ -66,6 +71,16 @@ public interface PlaylistService {
      * 从歌单移除歌曲
      */
     void removeSong(Long id, Long songId, Long userId);
+
+    /**
+     * 歌曲被删除时，清掉它在所有歌单（含「我喜欢的音乐」）里的关联并重算数量。
+     * <p>
+     * 供 {@link SongService#delete} 调用：playlist_song 是物理删除的关联表，
+     * 不在这里清就会留下指向已删歌曲的孤儿行，歌单 song_count 也会和实际曲数对不上。
+     *
+     * @return 被影响的歌单数量
+     */
+    int purgeSongFromPlaylists(Long songId);
 
     /** 保存歌单自定义排序（仅歌单所有者可操作，需传当前歌单歌曲的完整排列） */
     void reorderSongs(Long id, List<Long> songIds, Long userId);

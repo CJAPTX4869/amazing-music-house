@@ -4,6 +4,7 @@ import com.example.music.common.response.Result;
 import com.example.music.dto.SongQueryDTO;
 import com.example.music.dto.StatusDTO;
 import com.example.music.dto.UserQueryDTO;
+import com.example.music.security.OnlineClientTracker;
 import com.example.music.security.RequireAdmin;
 import com.example.music.security.UserContext;
 import com.example.music.service.AdminService;
@@ -14,6 +15,7 @@ import com.example.music.vo.SongVO;
 import com.example.music.vo.StatisticVO;
 import com.example.music.vo.UserVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +40,7 @@ import javax.validation.Valid;
 public class AdminController {
 
     private final AdminService adminService;
+    private final OnlineClientTracker onlineTracker;
     private final SongService songService;
     private final UserService userService;
 
@@ -64,6 +67,17 @@ public class AdminController {
     public Result<Void> updateUserStatus(@PathVariable Long id, @Valid @RequestBody StatusDTO dto) {
         adminService.updateUserStatus(id, dto.getStatus(), UserContext.getUserId());
         return Result.success("操作成功", null);
+    }
+
+    /**
+     * 删除用户（不可删自己 / 不可删管理员；连带清理其评论、点赞、记录、歌单）
+     */
+    @DeleteMapping("/users/{id}")
+    public Result<Void> deleteUser(@PathVariable Long id) {
+        adminService.deleteUser(id, UserContext.getUserId());
+        // 该用户的心跳键立即清除（否则最多 60 秒内仍显示"在线"）
+        onlineTracker.removeUser(id);
+        return Result.success("删除成功", null);
     }
 
     /**

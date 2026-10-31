@@ -49,8 +49,17 @@ function absolutizeAssets(node: any, depth = 0): any {
   return node;
 }
 // request interceptor: inject JWT
+// 客户端平台标识：Electron 桌面端 UA 自带 Electron，无需特殊处理
+function clientPlatform(): string {
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes('electron')) return 'desktop';
+  if (/android|iphone|ipad|mobile/.test(ua)) return 'mobile';
+  return 'web';
+}
+
 instance.interceptors.request.use((config) => {
   config.baseURL = getApiBase();
+  config.headers['X-Client-Platform'] = clientPlatform();
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -67,6 +76,9 @@ instance.interceptors.request.use((config) => {
  * 所以必须在**成功分支**判断，否则 token 过期后本地登录态永远不会被清理。
  */
 const handleAuthExpired = (message?: string) => {
+  // 本来就没登录时（匿名撞上后端 @RequireLogin）不能走这套：
+  // 否则会对从没登录过的人弹「登录已过期」，还会广播 authExpired 把界面打回未登录态
+  if (!localStorage.getItem(TOKEN_KEY)) return;
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem('isLogin');
   localStorage.removeItem('userProfile');
@@ -98,3 +110,10 @@ instance.interceptors.response.use((response) => {
 });
 
 export default instance;
+
+// 在线心跳：每 30 秒上报一次活跃状态（后端 90 秒 TTL 判离线；未登录静默跳过）
+setInterval(() => {
+  if (localStorage.getItem(TOKEN_KEY)) {
+    instance.get('/auth/profile').catch(() => {});
+  }
+}, 30000);

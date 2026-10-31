@@ -205,11 +205,16 @@ export default defineComponent({
             let rawIndex = row.isSearch ? index : row.rawIndex;
             return {
               ondblclick: () => {
-                let findIndex = mainStore.playList.findIndex(item => item.id === row.id)
+                // 队列下标只在「当前队列就是这张歌单」时才和这首歌对得上；
+                // 换歌单时必须用本张歌单自己的下标，否则会播成上一张歌单里同位置的那首歌
+                const sameQueue = mainStore.currentPlayListId === props.playListId;
+                const queueIndex = sameQueue
+                  ? mainStore.playList.findIndex(item => item.id === row.id)
+                  : -1;
                 handleClick(
                   props.rawSongList.length
                     ? props.rawSongList
-                    : props.songList, props.playListId, row, findIndex !== -1 ? findIndex : rawIndex
+                    : props.songList, props.playListId, row, queueIndex !== -1 ? queueIndex : rawIndex
                 )
               }
             };

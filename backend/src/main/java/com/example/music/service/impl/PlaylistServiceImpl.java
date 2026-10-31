@@ -16,6 +16,7 @@ import com.example.music.mapper.PlaylistMapper;
 import com.example.music.mapper.PlaylistSongMapper;
 import com.example.music.mapper.SongMapper;
 import com.example.music.mapper.UserMapper;
+import com.example.music.security.AdminAccess;
 import com.example.music.security.UserContext;
 import com.example.music.service.FileStorageService;
 import com.example.music.service.PlaylistService;
@@ -125,7 +126,7 @@ public class PlaylistServiceImpl implements PlaylistService {
                     ? UserContext.getUserId()
                     : null;
             boolean isOwner = viewerId != null && viewerId.equals(playlist.getUserId());
-            if (!isOwner && !UserContext.isAdmin()) {
+            if (!isOwner && !AdminAccess.isLocalAdmin()) {
                 throw new BusinessException(ResultCode.FORBIDDEN, "该歌单为私密歌单");
             }
         }
@@ -143,6 +144,21 @@ public class PlaylistServiceImpl implements PlaylistService {
         List<Playlist> list = playlistMapper.selectList(new LambdaQueryWrapper<Playlist>()
                 .eq(Playlist::getStatus, STATUS_PUBLIC)
                 .eq(Playlist::getType, TYPE_NORMAL)
+                .orderByDesc(Playlist::getCreateTime)
+                .last("LIMIT " + size));
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return list.stream().map(this::toVO).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PlaylistVO> listPublicByPlays(int limit) {
+        int size = Math.max(1, Math.min(limit, 50));
+        List<Playlist> list = playlistMapper.selectList(new LambdaQueryWrapper<Playlist>()
+                .eq(Playlist::getStatus, STATUS_PUBLIC)
+                .eq(Playlist::getType, TYPE_NORMAL)
+                .orderByDesc(Playlist::getPlayCount)
                 .orderByDesc(Playlist::getCreateTime)
                 .last("LIMIT " + size));
         if (CollectionUtils.isEmpty(list)) {
@@ -353,6 +369,21 @@ public class PlaylistServiceImpl implements PlaylistService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public int purgeSongFromPlaylists(Long songId) {
+        List<Long> playlistIds = playlistSongMapper.selectList(new LambdaQueryWrapper<PlaylistSong>()
+                        .eq(PlaylistSong::getSongId, songId))
+                .stream().map(PlaylistSong::getPlaylistId).distinct().collect(Collectors.toList());
+        if (playlistIds.isEmpty()) {
+            return 0;
+        }
+        playlistSongMapper.delete(new LambdaQueryWrapper<PlaylistSong>()
+                .eq(PlaylistSong::getSongId, songId));
+        playlistIds.forEach(this::refreshSongCount);
+        return playlistIds.size();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeSong(Long id, Long songId, Long userId) {
         getOwnedPlaylist(id, userId);
         playlistSongMapper.delete(new LambdaQueryWrapper<PlaylistSong>()
@@ -366,6 +397,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     /* ==================== 我喜欢的音乐 ==================== */
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PlaylistVO favorite(Long songId, Long userId) {
         Playlist favorite = getOrCreateFavorite(userId);
         addSongInternal(favorite.getId(), songId);
@@ -380,6 +412,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void unfavorite(Long songId, Long userId) {
         Playlist favorite = findFavorite(userId);
         if (favorite == null) {
@@ -496,14 +529,12 @@ public class PlaylistServiceImpl implements PlaylistService {
     }
 
     /**
-     * 重算并更新歌单的歌曲数量
+     * 重算并更新歌单的歌曲数量（只数仍然存在的歌曲，见 countLiveSongs 注释）
      */
     private void refreshSongCount(Long playlistId) {
-        Long count = playlistSongMapper.selectCount(new LambdaQueryWrapper<PlaylistSong>()
-                .eq(PlaylistSong::getPlaylistId, playlistId));
         Playlist update = new Playlist();
         update.setId(playlistId);
-        update.setSongCount(count == null ? 0 : count.intValue());
+        update.setSongCount(playlistSongMapper.countLiveSongs(playlistId));
         playlistMapper.updateById(update);
     }
 
@@ -589,7 +620,16 @@ public class PlaylistServiceImpl implements PlaylistService {
         playlist.setType(TYPE_FAVORITE);
         playlist.setSongCount(0);
         playlist.setStatus(STATUS_PUBLIC);
-        playlistMapper.insert(playlist);
+        try {
+            playlistMapper.insert(playlist);
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 并发首次收藏撞 uk_favorite 唯一索引：对方刚建好，取回即可，避免建出两个收藏歌单
+            Playlist existed = findFavorite(userId);
+            if (existed != null) {
+                return existed;
+            }
+            throw e;
+        }
         log.info("自动创建「我喜欢的音乐」歌单：id={}, userId={}", playlist.getId(), userId);
         return playlist;
     }

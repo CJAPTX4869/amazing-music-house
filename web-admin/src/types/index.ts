@@ -51,6 +51,9 @@ export interface RegisterDTO {
 export interface LoginDTO {
   username: string
   password: string
+
+  /** 抓娃娃人机验证票据（管理员登录必带） */
+  ticket?: string
 }
 
 /* ==================== 歌曲 ==================== */

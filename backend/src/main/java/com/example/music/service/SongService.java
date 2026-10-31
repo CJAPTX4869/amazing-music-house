@@ -29,6 +29,11 @@ public interface SongService {
     PageVO<SongVO> page(SongQueryDTO query, boolean adminView);
 
     /**
+     * 实体批量转 VO（含上传者昵称填充）；供运维"最火歌曲"等自定义查询复用
+     */
+    List<SongVO> convertToVO(List<Song> songs);
+
+    /**
      * 歌曲详情（含下架歌曲）
      */
     SongVO detail(Long id);

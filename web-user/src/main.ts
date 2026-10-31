@@ -3,7 +3,6 @@ import { createPinia } from 'pinia';
 import VueVirtualScroller from 'vue-virtual-scroller';
 // 虚拟滚动组件库的必需样式（PlayList 的 DynamicScroller 依赖，缺失会导致列表项定位错乱）
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
-import './utils/initIndexDb';
 import { createApp } from 'vue';
 import App from './App.vue';
 import './assets/css/common.css';

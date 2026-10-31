@@ -27,7 +27,8 @@ public class SongUploadDTO {
     private String album;
 
     @Size(max = 50, message = "流派长度不能超过 50 个字符")
-    private String genre;
+    /** 标签（逗号分隔，最多 3 个） */
+    private String tags;
 
     /** 前端预计算的 MD5（用于秒传判断，可选） */
     private String md5;

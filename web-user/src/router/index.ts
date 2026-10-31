@@ -66,4 +66,10 @@ export const registerRouteHook = (beforeEachFn: NavigationGuardWithThis<undefine
   router.beforeEach(beforeEachFn);
   router.beforeResolve(beforeResolveFn);
 };
+// 懒加载 chunk 拉取失败时（断网、发版后旧 index.html 引用了已被清理的 hash），
+// beforeResolve 不会触发，进度条会永远停在 70%，看起来像页面卡死。这里收尾并提示重试。
+router.onError(() => {
+  window.$message?.error('页面资源加载失败，请检查网络后重试');
+  (document.querySelector('.n-loading-bar') as HTMLElement | null)?.style.setProperty('display', 'none');
+});
 export default router;

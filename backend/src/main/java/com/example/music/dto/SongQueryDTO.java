@@ -28,4 +28,6 @@ public class SongQueryDTO {
 
     /** 状态筛选：仅管理端使用（1-上架 0-下架），公开列表强制只查上架 */
     private Integer status;
+    /** 标签筛选（FIND_IN_SET 精确匹配单个标签，如 华语/纯音乐；V3.2 新增） */
+    private String tag;
 }

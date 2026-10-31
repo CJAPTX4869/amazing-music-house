@@ -39,6 +39,33 @@
             <template #title>用户管理</template>
           </el-menu-item>
         </el-sub-menu>
+
+        <el-sub-menu v-if="userStore.isAdmin" index="ops">
+          <template #title>
+            <el-icon><Monitor /></el-icon>
+            <span>运维后台</span>
+          </template>
+          <el-menu-item index="/admin/ops">
+            <el-icon><Monitor /></el-icon>
+            <span>运维状态</span>
+          </el-menu-item>
+          <el-menu-item index="/admin/online">
+            <el-icon><User /></el-icon>
+            <span>用户运维管理</span>
+          </el-menu-item>
+          <el-menu-item index="/admin/song-ops">
+            <el-icon><Files /></el-icon>
+            <span>歌曲状态总览</span>
+          </el-menu-item>
+          <el-menu-item index="/admin/play-daily">
+            <el-icon><TrendCharts /></el-icon>
+            <span>每日播放统计</span>
+          </el-menu-item>
+          <el-menu-item index="/admin/hot-songs">
+            <el-icon><Trophy /></el-icon>
+            <span>最火歌曲</span>
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
 
@@ -63,6 +90,7 @@
             <el-tag v-if="userStore.isAdmin" type="warning" size="small" effect="dark">管理员</el-tag>
             <el-tag v-else size="small">普通用户</el-tag>
             <span class="username">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</span>
+            <el-button text @click="pwdVisible = true">改密</el-button>
             <el-button text @click="handleLogout">退出</el-button>
           </template>
           <el-button v-else type="primary" size="small" @click="router.push('/login')">
@@ -77,6 +105,22 @@
       </el-main>
     </el-container>
 
+    <!-- 修改密码 -->
+    <el-dialog v-model="pwdVisible" title="修改密码" width="360px" :close-on-click-modal="false">
+      <el-form label-width="72px">
+        <el-form-item label="旧密码">
+          <el-input v-model="pwdForm.oldPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="pwdForm.newPassword" type="password" show-password placeholder="至少 6 位" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="pwdVisible = false">取消</el-button>
+        <el-button type="primary" :loading="pwdLoading" @click="handleChangePwd">保存</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 全局播放器 -->
     <AudioPlayer />
   </el-container>
@@ -86,9 +130,11 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Headset, Setting, Upload, Files, User, Expand, Fold } from '@element-plus/icons-vue'
+import { Headset, Setting, Upload, Files, User, Expand, Fold, Monitor, TrendCharts, Trophy } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import AudioPlayer from '@/components/AudioPlayer.vue'
+import { changePassword } from '@/api/auth'
+import { reactive } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -97,6 +143,28 @@ const collapsed = ref(false)
 
 const activeMenu = computed(() => route.path)
 const pageTitle = computed(() => (route.meta.title as string) || '')
+
+// 修改密码
+const pwdVisible = ref(false)
+const pwdLoading = ref(false)
+const pwdForm = reactive({ oldPassword: '', newPassword: '' })
+
+async function handleChangePwd() {
+  if (!pwdForm.oldPassword || pwdForm.newPassword.length < 6) {
+    ElMessage.warning('请填旧密码，新密码至少 6 位')
+    return
+  }
+  pwdLoading.value = true
+  try {
+    await changePassword({ ...pwdForm })
+    ElMessage.success('密码修改成功，下次登录用新密码')
+    pwdVisible.value = false
+    pwdForm.oldPassword = ''
+    pwdForm.newPassword = ''
+  } finally {
+    pwdLoading.value = false
+  }
+}
 
 async function handleLogout() {
   try {

@@ -34,3 +34,13 @@ Thumbs.db
 *.bak*
 .modules.yaml
 .pnpm-workspace-state*.json
+
+# electron dev profile / pnpm state / build output
+.electron-dev-profile/
+.pnpm-workspace-state-v1.json
+.modules.yaml
+release/
+dist/
+target/
+node_modules/
+.env.local

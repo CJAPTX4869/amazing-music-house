@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import service from '@/service/request';
 import { useMainStore } from '@/stores/main';
 import { Play, AddOutline } from '@vicons/ionicons5';
 const mainStore = useMainStore();
@@ -8,6 +9,10 @@ const props = withDefaults(defineProps<{
 }>(), { songList: () => [] });
 // 点击播放全部
 const handleStartPlayAllClick = () => {
+  // V3.3 歌单播放计数上报（推荐歌单"高播放"排序数据源；失败静默）
+  if (props.songListId) {
+    service.get('/playlist/play?id=' + props.songListId).catch(() => {});
+  }
   if (mainStore.currentPlayListId === props.songListId) {
     if (mainStore.playing) {
       return window.$message.warning('正在播放中');

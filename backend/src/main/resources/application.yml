@@ -1,5 +1,9 @@
 server:
   port: 8080
+  # 默认对所有网卡开放：网页用户端要给局域网其他设备访问。
+  # 管理接口不受此影响 —— JwtInterceptor 已按来源 IP 锁死只允许 127.0.0.1/::1。
+  # 只想本机用时设环境变量 SERVER_ADDRESS=127.0.0.1 收紧。
+  address: ${SERVER_ADDRESS:0.0.0.0}
   servlet:
     context-path: /api
   tomcat:
@@ -7,14 +11,21 @@ server:
     max-swallow-size: -1
 
 spring:
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 3000
   application:
     name: music-server
 
   datasource:
     # MySQL 8.4：caching_sha2_password 认证需 allowPublicKeyRetrieval=true，否则报 Public Key Retrieval is not allowed
-    url: jdbc:mysql://localhost:3306/music_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:root}
+    # 连接地址也走变量：本机默认 localhost，服务器上用 MYSQL_URL 覆盖即可，不用改代码
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/music_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    # 注意：这里不写默认值（Spring 不支持 shell 的 ${VAR:?提示} 写法，写了会把提示文本当成用户名）。
+    # 不设变量时启动即报 "Could not resolve placeholder 'MYSQL_USERNAME'"，属于预期行为。
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -24,6 +35,24 @@ spring:
       max-wait: 60000
       validation-query: SELECT 1
       test-while-idle: true
+      filters: stat,wall                # SQL 统计 + 防火墙
+      filter:
+        stat:
+          enabled: true
+          log-slow-sql: true
+          slow-sql-millis: 1000          # 超过 1 秒标记为慢 SQL
+        wall:
+          enabled: true
+      web-stat-filter:                   # Web 请求与 URI 监控
+        enabled: true
+        url-pattern: /*
+        exclusions: "*.js,*.css,*.gif,*.jpg,*.png,*.svg,*.ico,/druid/*"
+      stat-view-servlet:                 # 监控页：/api/druid
+        enabled: true
+        url-pattern: /druid/*
+        login-username: admin
+        login-password: ${DRUID_VIEW_PASSWORD:admin123}
+        reset-enable: false              # 禁止页面上一键清空统计
 
   servlet:
     multipart:
@@ -58,13 +87,17 @@ mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
 
 app:
+  recovery-code: ${RECOVERY_CODE:}  # 忘记密码：空值=禁用找回，生产用环境变量覆盖
   jwt:
     # 生产环境必须配置 JWT_SECRET（≥32 字节）；留空时后端为本次启动生成随机密钥并告警，
     secret: ${JWT_SECRET:}
     expiration: 604800000            # 7 天（毫秒）；token 有效期，调小更安全、调大免频繁登录
   cors:
-    # 生产环境请通过环境变量 CORS_ALLOWED_ORIGINS 指定具体域名，多个用逗号分隔
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+    # 默认放行本机开发端口 + null/file://（Electron 桌面端用 file:// 加载页面，Chromium
+    # 发出的 Origin 是字面量 null 或 file://（新版 44+ 为 file://），封面 img 带
+    # crossorigin=anonymous 必须放行才能显示/取色；
+    # 生产必须用 CORS_ALLOWED_ORIGINS 指定域名（逗号分隔）
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://192.168.*:*,http://10.*:*,null,file://}
 
   storage:
     # 存储根目录。相对路径由 FileStorageServiceImpl 基于「项目目录」解析（不依赖启动时的工作目录），

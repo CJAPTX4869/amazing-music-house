@@ -1,5 +1,7 @@
 package com.example.music.service;
 
+import com.example.music.dto.ChangePasswordDTO;
+import com.example.music.dto.ForgotPasswordDTO;
 import com.example.music.dto.LoginDTO;
 import com.example.music.dto.ProfileUpdateDTO;
 import com.example.music.dto.RegisterDTO;
@@ -19,9 +21,27 @@ public interface UserService {
     UserVO register(RegisterDTO dto);
 
     /**
+     * 忘记密码：用户名 + 部署恢复码直接设置新密码（免登录）
+     *
+     * @param dto 用户名 / 恢复码 / 新密码
+     */
+    void forgotPassword(ForgotPasswordDTO dto);
+
+    /**
+     * 登录后修改密码（验证旧密码）
+     *
+     * @param userId 当前登录用户 id
+     * @param dto    旧密码 / 新密码
+     */
+    void changePassword(Long userId, ChangePasswordDTO dto);
+
+    /**
      * 登录，成功返回 JWT 与用户信息
      */
     LoginVO login(LoginDTO dto);
+
+    /** 该用户名是否管理员账号（存在且 role=1；用于登录时决定是否强制人机验证票据） */
+    boolean isAdminAccount(String username);
 
     /**
      * 获取当前登录用户信息

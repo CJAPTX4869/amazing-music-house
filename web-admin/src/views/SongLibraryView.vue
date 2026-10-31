@@ -38,7 +38,7 @@
 
       <!-- 表格 -->
       <el-table v-loading="loading" :data="songList" style="width: 100%" empty-text="暂无歌曲">
-        <el-table-column type="index" label="#" width="50" />
+        <el-table-column type="index" label="#" width="50" :index="(i) => (query.page - 1) * query.size + i + 1" />
 
         <el-table-column label="封面" width="70">
           <template #default="{ row }">
@@ -111,7 +111,7 @@
           :page-sizes="[10, 20, 50]"
           layout="total, sizes, prev, pager, next"
           @current-change="loadList"
-          @size-change="loadList"
+          @size-change="handleSizeChange"
         />
       </div>
     </el-card>
@@ -119,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, VideoPlay, Picture } from '@element-plus/icons-vue'
 import { getSongList, downloadSong, coverUrl } from '@/api/song'
@@ -139,10 +139,17 @@ const query = reactive({
   size: 10
 })
 
+// 请求序号：快速搜索/切页时丢弃过期响应，防止旧结果覆盖新结果
+let reqSeq = 0
+// 下载后延迟刷新的定时器句柄，卸载时清理
+let refreshTimer: number | undefined
+
 async function loadList() {
+  const seq = ++reqSeq
   loading.value = true
   try {
     const res = await getSongList(query)
+    if (seq !== reqSeq) return
     songList.value = res.records
     total.value = res.total
   } catch {
@@ -153,6 +160,12 @@ async function loadList() {
 }
 
 function handleSearch() {
+  query.page = 1
+  loadList()
+}
+
+/** 每页条数变化：回到第一页再加载，避免停留在超出范围的页码 */
+function handleSizeChange() {
   query.page = 1
   loadList()
 }
@@ -179,13 +192,17 @@ async function handleDownload(song: SongVO) {
   try {
     await downloadSong(song.id, song.originalName || song.title)
     ElMessage.success('已开始下载')
-    setTimeout(loadList, 800)
+    refreshTimer = window.setTimeout(loadList, 800)
   } catch {
     // 拦截器已提示
   }
 }
 
 onMounted(loadList)
+
+onBeforeUnmount(() => {
+  if (refreshTimer !== undefined) window.clearTimeout(refreshTimer)
+})
 </script>
 
 <style scoped lang="scss">

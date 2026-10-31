@@ -76,6 +76,7 @@ public class CommentController {
         return ResponseEntity.ok()
                 .contentType(resolveImageMediaType(resource))
                 .header(HttpHeaders.CACHE_CONTROL, IMAGE_CACHE_CONTROL)
+                .header("X-Content-Type-Options", "nosniff")
                 .body(resource);
     }
 
@@ -99,6 +100,7 @@ public class CommentController {
         return ResponseEntity.ok()
                 .contentType(resolveImageMediaType(resource))
                 .header(HttpHeaders.CACHE_CONTROL, IMAGE_CACHE_CONTROL)
+                .header("X-Content-Type-Options", "nosniff")
                 .body(resource);
     }
 

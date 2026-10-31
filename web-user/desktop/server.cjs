@@ -10,7 +10,9 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..', 'dist');
 const PORT = Number(process.env.MUSIC_APP_PORT || 5180);
-const HOST = '127.0.0.1';
+// 网页端要给局域网其他设备访问，所以默认监听所有网卡；
+// 只想本机用时设 MUSIC_APP_HOST=127.0.0.1 收紧。
+const HOST = process.env.MUSIC_APP_HOST || '0.0.0.0';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',

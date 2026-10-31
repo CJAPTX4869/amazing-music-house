@@ -27,6 +27,14 @@ export function normalizeApiBase(value: string): string {
   if (!value) return '';
   let v = String(value).trim();
   if (!v) return '';
+  // "auto"：跟随当前页面的主机名推导后端地址。
+  // 网页端要给局域网多台设备用，而 config.json 是同一份文件，
+  // 写死 localhost 会让手机去连手机自己；写死某个 IP 又要求每台设备手改。
+  if (/^(auto|\*)$/i.test(v)) {
+    const host = location.hostname;
+    // Electron 下页面是 file://，hostname 为空 → 回落到本机
+    v = (!host || host === 'null') ? '127.0.0.1:8080' : `${location.protocol}//${host}:8080`;
+  }
   if (!/^https?:\/\//i.test(v)) {
     v = `http://${v}`;
   }

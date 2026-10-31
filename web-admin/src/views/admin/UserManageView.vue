@@ -55,7 +55,7 @@
         <el-table-column label="注册时间" width="170">
           <template #default="{ row }">{{ row.createTime || '-' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="190" fixed="right">
+        <el-table-column label="操作" width="230" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" :loading="avatarUploadingId === row.id" @click="triggerAvatarUpload(row as UserVO)">
               设置头像
@@ -67,6 +67,14 @@
               @click="toggleStatus(row as UserVO)"
             >
               {{ row.status === 1 ? '禁用' : '启用' }}
+            </el-button>
+            <el-button
+              link
+              type="danger"
+              :disabled="isSelf(row as UserVO) || row.role === 1"
+              @click="removeUser(row as UserVO)"
+            >
+              删除
             </el-button>
           </template>
         </el-table-column>
@@ -97,7 +105,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserList, updateUserStatus, uploadUserAvatar } from '@/api/admin'
+import { getUserList, updateUserStatus, uploadUserAvatar, deleteUser } from '@/api/admin'
 import { compressToSquare, validateImageFile } from '@/utils/image'
 import type { UserVO } from '@/types'
 import { useUserStore } from '@/stores/user'
@@ -108,7 +116,7 @@ const loading = ref(false)
 const list = ref<UserVO[]>([])
 const total = ref(0)
 
-/** 头像版本号：列表加载 / 换图后刷新，用于绕过浏览器图片缓存 */
+/** 头像版本号：初始赋值一次，仅头像真实变更（上传成功）后更新，翻页/刷新列表不更新 */
 const avatarVersion = ref(Date.now())
 /** 待上传头像的用户 ID */
 const avatarTargetId = ref<number | null>(null)
@@ -128,11 +136,16 @@ const isSelf = (row: UserVO) => row.id === userStore.userInfo?.id
 /** 头像地址（无头像返回空串，由 el-avatar 显示昵称首字母） */
 function avatarSrc(row: UserVO) {
   if (!row.avatar) return ''
-  // 走 Vite 代理 → 后端 /api/users/{id}/avatar
-  return `/api/users/${row.id}/avatar?v=${avatarVersion.value}`
+  // 与 streamUrl/coverUrl 一致：拼接 VITE_API_BASE_URL，开发环境回落 Vite 代理
+  const base = import.meta.env.VITE_API_BASE_URL || '/api'
+  return `${base}/users/${row.id}/avatar?v=${avatarVersion.value}`
 }
 
+// 请求序号：快速搜索/切页时丢弃过期响应，防止旧结果覆盖新结果
+let reqSeq = 0
+
 async function loadList() {
+  const seq = ++reqSeq
   loading.value = true
   try {
     const res = await getUserList({
@@ -141,9 +154,9 @@ async function loadList() {
       page: query.page,
       size: query.size
     })
+    if (seq !== reqSeq) return
     list.value = res.records
     total.value = res.total
-    avatarVersion.value = Date.now()
   } catch {
     // 拦截器已提示
   } finally {
@@ -200,6 +213,27 @@ async function toggleStatus(row: UserVO) {
   try {
     await updateUserStatus(row.id, { status: next as 0 | 1 })
     ElMessage.success(next === 0 ? '已禁用' : '已启用')
+    loadList()
+  } catch {
+    // 拦截器已提示
+  }
+}
+
+async function removeUser(row: UserVO) {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除用户「${row.username}」吗？其评论、点赞、播放/下载记录和创建的歌单将一并删除，操作不可恢复。`,
+      '删除用户',
+      { type: 'error', confirmButtonText: '删除', cancelButtonText: '取消', confirmButtonClass: 'el-button--danger' }
+    )
+  } catch {
+    return
+  }
+  try {
+    await deleteUser(row.id)
+    ElMessage.success('已删除')
+    // 删掉当前页最后一条后回退一页，避免停留在空页
+    if (list.value.length === 1 && query.page > 1) query.page -= 1
     loadList()
   } catch {
     // 拦截器已提示

@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.nio.file.InvalidPathException;
 import java.util.Locale;
 
 /**
@@ -121,6 +122,15 @@ public class GlobalExceptionHandler {
     public Result<Void> handleNoHandlerFound(NoHandlerFoundException e) {
         log.warn("接口不存在：{} {}", e.getHttpMethod(), e.getRequestURL());
         return Result.error(ResultCode.NOT_FOUND, "请求的接口不存在");
+    }
+
+    /**
+     * 文件路径含非法字符（如 NUL）：Paths.get() 解析失败，按参数错误返回而非 500
+     */
+    @ExceptionHandler(InvalidPathException.class)
+    public Result<Void> handleInvalidPath(InvalidPathException e) {
+        log.warn("非法的文件路径：{}", e.getMessage());
+        return Result.error(ResultCode.PARAM_ERROR, "非法的文件路径");
     }
 
     /**

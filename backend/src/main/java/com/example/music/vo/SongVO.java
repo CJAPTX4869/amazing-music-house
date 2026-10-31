@@ -21,7 +21,8 @@ public class SongVO {
     private String title;
     private String artist;
     private String album;
-    private String genre;
+    /** 标签（逗号分隔，最多 3 个；V3.2 新增，替代原 genre） */
+    private String tags;
 
     /** 时长（秒） */
     private Integer duration;
@@ -87,7 +88,7 @@ public class SongVO {
         vo.setTitle(song.getTitle());
         vo.setArtist(song.getArtist());
         vo.setAlbum(song.getAlbum());
-        vo.setGenre(song.getGenre());
+        vo.setTags(song.getTags());
         vo.setDuration(song.getDuration());
         vo.setDurationText(FormatUtils.duration(song.getDuration()));
         vo.setFileName(song.getFileName());

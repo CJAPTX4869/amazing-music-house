@@ -124,10 +124,10 @@ public final class LegacyConvertUtils {
      * @return 无封面时返回空串（旧前端 LoadImg 会自动回退占位图）
      */
     private static String absoluteCover(SongVO vo, String baseUrl) {
-        String coverUrl = vo.getCoverUrl();
-        if (!StringUtils.hasText(coverUrl)) {
-            return "";
-        }
+        // 无封面也输出 URL：/songs/{id}/cover 端点已内置默认图兜底，前端永不再空白
+        String coverUrl = StringUtils.hasText(vo.getCoverUrl())
+                ? vo.getCoverUrl()
+                : "/songs/" + vo.getId() + "/cover";
         return StringUtils.hasText(baseUrl) ? baseUrl + API_PREFIX + coverUrl : coverUrl;
     }
 
@@ -266,10 +266,10 @@ public final class LegacyConvertUtils {
      * @return 无封面时返回空串（旧前端 LoadImg 自动回退占位图）
      */
     private static String absolutePlaylistCover(PlaylistVO vo, String baseUrl) {
-        String coverUrl = vo.getCoverUrl();
-        if (!StringUtils.hasText(coverUrl)) {
-            return "";
-        }
+        // 无封面也输出 URL：/playlists/{id}/cover 端点已内置默认图兜底
+        String coverUrl = StringUtils.hasText(vo.getCoverUrl())
+                ? vo.getCoverUrl()
+                : "/playlists/" + vo.getId() + "/cover";
         return StringUtils.hasText(baseUrl) ? baseUrl + API_PREFIX + coverUrl : coverUrl;
     }
 }

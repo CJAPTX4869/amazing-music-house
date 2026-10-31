@@ -15,9 +15,11 @@ import com.example.music.entity.DownloadRecord;
 import com.example.music.entity.Song;
 import com.example.music.entity.User;
 import com.example.music.mapper.DownloadRecordMapper;
+import com.example.music.entity.SongComment;
 import com.example.music.mapper.SongMapper;
 import com.example.music.mapper.UserMapper;
 import com.example.music.service.FileStorageService;
+import com.example.music.service.PlaylistService;
 import com.example.music.service.SongService;
 import com.example.music.utils.AudioMetadataUtils;
 import com.example.music.utils.LyricConvertUtils;
@@ -27,6 +29,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import cn.hutool.core.io.IoUtil;
 import org.springframework.core.io.Resource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.util.DigestUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -81,6 +87,7 @@ public class SongServiceImpl implements SongService {
         SORT_MAPPING.put("create_time", Song::getCreateTime);
         SORT_MAPPING.put("download_count", Song::getDownloadCount);
         SORT_MAPPING.put("play_count", Song::getPlayCount);
+        SORT_MAPPING.put("comment_count", Song::getCommentCount);
         SORT_MAPPING.put("title", Song::getTitle);
     }
 
@@ -89,10 +96,19 @@ public class SongServiceImpl implements SongService {
     private final DownloadRecordMapper downloadRecordMapper;
     private final FileStorageService fileStorageService;
 
+    private final StringRedisTemplate redis;
+    private final ObjectMapper objectMapper;
+    private final PlaylistService playlistService;
+    private final com.example.music.mapper.SongCommentMapper songCommentMapper;
+    private final com.example.music.mapper.CommentLikeMapper commentLikeMapper;
+    private final com.example.music.mapper.PlayHistoryMapper playHistoryMapper;
+    private final com.example.music.mapper.SongPlayDailyMapper songPlayDailyMapper;
+
     /* ==================== 上传 ==================== */
 
     @Override
     public SongVO upload(SongUploadDTO dto, Long uploaderId) {
+        evictSongPageCache();
         // 1. 前端已提供 MD5 → 先做秒传判断，命中则完全不需要传输/落盘
         String clientMd5 = normalizeMd5(dto.getMd5());
         if (clientMd5 != null) {
@@ -127,7 +143,7 @@ public class SongServiceImpl implements SongService {
             song.setTitle(truncate(resolvedTitle, MAX_TITLE_LEN));
             song.setArtist(truncate(firstNonBlank(dto.getArtist(), metadata.getArtist()), MAX_ARTIST_LEN));
             song.setAlbum(truncate(firstNonBlank(dto.getAlbum(), metadata.getAlbum()), MAX_ALBUM_LEN));
-            song.setGenre(truncate(firstNonBlank(dto.getGenre(), metadata.getGenre()), MAX_GENRE_LEN));
+            song.setTags(normalizeTags(firstNonBlank(dto.getTags(), metadata.getGenre())));
             song.setDuration(metadata.getDuration() == null ? 0 : metadata.getDuration());
             song.setOriginalName(originalName);
             song.setFileName(stored.getFileName());
@@ -172,6 +188,34 @@ public class SongServiceImpl implements SongService {
 
     @Override
     public PageVO<SongVO> page(SongQueryDTO query, boolean adminView) {
+        // 公开端列表走 Redis 缓存（TTL 5 分钟），管理端实时查询
+        if (!adminView) {
+            String raw = String.join("|",
+                    String.valueOf(query.getPage()), String.valueOf(query.getSize()),
+                    query.getSort() == null ? "" : query.getSort(),
+                    query.getKeyword() == null ? "" : query.getKeyword(),
+                    query.getStatus() == null ? "" : String.valueOf(query.getStatus()));
+            String key = "songs:page:" + DigestUtils.md5DigestAsHex(raw.getBytes());
+            try {
+                String cached = redis.opsForValue().get(key);
+                if (cached != null) {
+                    return objectMapper.readValue(cached, new TypeReference<PageVO<SongVO>>() { });
+                }
+            } catch (Exception ignore) {
+                // 缓存读取失败按未命中处理
+            }
+            PageVO<SongVO> vo = doPage(query, adminView);
+            try {
+                redis.opsForValue().set(key, objectMapper.writeValueAsString(vo), java.time.Duration.ofMinutes(5));
+            } catch (Exception ignore) {
+                // 序列化失败不影响主流程
+            }
+            return vo;
+        }
+        return doPage(query, adminView);
+    }
+
+    private PageVO<SongVO> doPage(SongQueryDTO query, boolean adminView) {
         LambdaQueryWrapper<Song> wrapper = new LambdaQueryWrapper<>();
 
         String keyword = query.getKeyword() == null ? null : query.getKeyword().trim();
@@ -180,6 +224,10 @@ public class SongServiceImpl implements SongService {
                     .or().like(Song::getArtist, keyword)
                     .or().like(Song::getAlbum, keyword));
         }
+
+        // 标签筛选：FIND_IN_SET 精确匹配单个标签（类型 tab 用）
+        wrapper.apply(StringUtils.hasText(query.getTag()),
+                "FIND_IN_SET({0}, tags) > 0", query.getTag());
 
         if (adminView) {
             // 管理端：可按状态筛选（不传则含全部）
@@ -213,6 +261,7 @@ public class SongServiceImpl implements SongService {
 
     @Override
     public SongVO checkMd5(String md5) {
+        evictSongPageCache();
         String normalized = normalizeMd5(md5);
         if (normalized == null) {
             return null;
@@ -237,6 +286,7 @@ public class SongServiceImpl implements SongService {
 
     @Override
     public SongVO update(Long id, SongUpdateDTO dto) {
+        evictSongPageCache();
         Song song = songMapper.selectById(id);
         if (song == null) {
             throw new BusinessException(ResultCode.NOT_FOUND, "歌曲不存在");
@@ -252,8 +302,8 @@ public class SongServiceImpl implements SongService {
         if (dto.getAlbum() != null) {
             song.setAlbum(truncate(dto.getAlbum(), MAX_ALBUM_LEN));
         }
-        if (dto.getGenre() != null) {
-            song.setGenre(truncate(dto.getGenre(), MAX_GENRE_LEN));
+        if (dto.getTags() != null) {
+            song.setTags(normalizeTags(dto.getTags()));
         }
 
         songMapper.updateById(song);
@@ -263,6 +313,7 @@ public class SongServiceImpl implements SongService {
 
     @Override
     public void updateStatus(Long id, Integer status) {
+        evictSongPageCache();
         Song song = songMapper.selectById(id);
         if (song == null) {
             throw new BusinessException(ResultCode.NOT_FOUND, "歌曲不存在");
@@ -283,20 +334,43 @@ public class SongServiceImpl implements SongService {
     /* ==================== 删除 ==================== */
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
+        evictSongPageCache();
         Song song = songMapper.selectById(id);
         if (song == null) {
             throw new BusinessException(ResultCode.NOT_FOUND, "歌曲不存在");
         }
-        // 顺序：先逻辑删除 DB 记录，再物理清理文件（文件删除失败仅记日志）
-        songMapper.deleteById(id);
+        // 1. 清歌单关联：playlist_song 是物理删除的关联表，不在这里清就会留下指向已删歌曲的孤儿行
+        int purged = playlistService.purgeSongFromPlaylists(id);
+        // 2. 级联清除关联数据：评论点赞 → 评论 → 播放历史 → 下载记录 → 每日播放统计（全部物理删除）
+        List<Long> commentIds = songCommentMapper.selectList(new LambdaQueryWrapper<SongComment>()
+                        .eq(SongComment::getSongId, id))
+                .stream().map(SongComment::getId).collect(Collectors.toList());
+        if (!commentIds.isEmpty()) {
+            commentLikeMapper.delete(new LambdaQueryWrapper<com.example.music.entity.CommentLike>()
+                    .in(com.example.music.entity.CommentLike::getCommentId, commentIds));
+        }
+        songCommentMapper.physicalDeleteBySongId(id);
+        playHistoryMapper.delete(new LambdaQueryWrapper<com.example.music.entity.PlayHistory>()
+                .eq(com.example.music.entity.PlayHistory::getSongId, id));
+        downloadRecordMapper.delete(new LambdaQueryWrapper<com.example.music.entity.DownloadRecord>()
+                .eq(com.example.music.entity.DownloadRecord::getSongId, id));
+        songPlayDailyMapper.deleteBySongId(id);
+        // 3. 物理删除歌曲行（用户要求：删除即全部清除，不保留逻辑删除行）
+        songMapper.physicalDeleteById(id);
+        // 4. 物理清理文件：音频 + 封面 + 歌词（失败仅记日志，不影响主流程）
         fileStorageService.delete(song.getFilePath());
-        log.info("歌曲已删除：id={}, title={}", song.getId(), song.getTitle());
+        fileStorageService.delete(song.getCoverPath());
+        fileStorageService.delete(song.getLyricPath());
+        log.info("歌曲已彻底删除：id={}, title={}, 从 {} 个歌单中移除，关联数据与文件已清除",
+                song.getId(), song.getTitle(), purged);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDelete(List<Long> ids) {
+        evictSongPageCache();
         if (CollectionUtils.isEmpty(ids)) {
             throw new BusinessException(ResultCode.PARAM_ERROR, "请选择要删除的歌曲");
         }
@@ -305,10 +379,29 @@ public class SongServiceImpl implements SongService {
             return;
         }
         List<Long> existIds = songs.stream().map(Song::getId).collect(Collectors.toList());
-        songMapper.deleteBatchIds(existIds);
-        // 文件删除放在 DB 事务之外亦可；此处失败不抛异常，避免影响整体结果
-        songs.forEach(song -> fileStorageService.delete(song.getFilePath()));
-        log.info("批量删除歌曲完成：请求 {} 条，实际删除 {} 条", ids.size(), songs.size());
+        existIds.forEach(playlistService::purgeSongFromPlaylists);
+        // 级联清除关联数据（与单个删除一致）
+        List<Long> commentIds = songCommentMapper.selectList(new LambdaQueryWrapper<SongComment>()
+                        .in(SongComment::getSongId, existIds))
+                .stream().map(SongComment::getId).collect(Collectors.toList());
+        if (!commentIds.isEmpty()) {
+            commentLikeMapper.delete(new LambdaQueryWrapper<com.example.music.entity.CommentLike>()
+                    .in(com.example.music.entity.CommentLike::getCommentId, commentIds));
+        }
+        existIds.forEach(songCommentMapper::physicalDeleteBySongId);
+        playHistoryMapper.delete(new LambdaQueryWrapper<com.example.music.entity.PlayHistory>()
+                .in(com.example.music.entity.PlayHistory::getSongId, existIds));
+        downloadRecordMapper.delete(new LambdaQueryWrapper<com.example.music.entity.DownloadRecord>()
+                .in(com.example.music.entity.DownloadRecord::getSongId, existIds));
+        existIds.forEach(songPlayDailyMapper::deleteBySongId);
+        existIds.forEach(songMapper::physicalDeleteById);
+        // 物理文件：音频 + 封面 + 歌词（失败不抛异常，避免影响整体结果）
+        songs.forEach(song -> {
+            fileStorageService.delete(song.getFilePath());
+            fileStorageService.delete(song.getCoverPath());
+            fileStorageService.delete(song.getLyricPath());
+        });
+        log.info("批量删除歌曲完成（含级联）：请求 {} 条，实际删除 {} 条", ids.size(), songs.size());
     }
 
     /* ==================== 行为记录（异步） ==================== */
@@ -335,6 +428,7 @@ public class SongServiceImpl implements SongService {
     public void recordPlayAsync(Long songId) {
         try {
             songMapper.incrementPlayCount(songId);
+            songPlayDailyMapper.recordDailyPlay(songId);   // 每日播放统计实时累加
         } catch (Exception e) {
             log.warn("记录播放行为失败（已忽略）：songId={}, err={}", songId, e.getMessage());
         }
@@ -511,6 +605,11 @@ public class SongServiceImpl implements SongService {
     /**
      * 批量转换 VO，并一次性填充上传者名称（避免 N+1 查询）
      */
+    @Override
+    public List<SongVO> convertToVO(List<Song> songs) {
+        return toVOList(songs);
+    }
+
     private List<SongVO> toVOList(List<Song> songs) {
         if (CollectionUtils.isEmpty(songs)) {
             return Collections.emptyList();
@@ -553,6 +652,25 @@ public class SongServiceImpl implements SongService {
                 .last("LIMIT 1"));
     }
 
+    /**
+     * 标签规范化：按逗号/中文逗号/顿号切分，trim、去空、去重、单个截断 20 字，
+     * 最多保留 3 个（多写的丢弃），返回逗号拼接串；无有效标签返回 null。
+     */
+    private String normalizeTags(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
+        for (String t : raw.split("[,，、]")) {
+            String v = t.trim();
+            if (v.isEmpty()) continue;
+            if (v.length() > 20) v = v.substring(0, 20);
+            set.add(v);
+            if (set.size() >= 3) break;
+        }
+        return set.isEmpty() ? null : String.join(",", set);
+    }
+
     private String normalizeMd5(String md5) {
         if (!StringUtils.hasText(md5)) {
             return null;
@@ -587,5 +705,15 @@ public class SongServiceImpl implements SongService {
         }
         String trimmed = value.trim();
         return trimmed.length() <= maxLength ? trimmed : trimmed.substring(0, maxLength);
+    }
+
+    private void evictSongPageCache() {
+        try {
+            java.util.Set<String> keys = redis.keys("songs:page:*");
+            if (keys != null && !keys.isEmpty()) {
+                redis.delete(keys);
+            }
+        } catch (Exception ignore) {
+        }
     }
 }
